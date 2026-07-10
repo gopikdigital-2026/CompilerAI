@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-surface-900 text-neutral-100 font-sans antialiased;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-800;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-500 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-500;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-400 text-white font-medium rounded-lg transition-all duration-200 shadow-glow-brand hover:shadow-glow-brand focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-surface-900;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 bg-surface-700 hover:bg-surface-600 text-neutral-100 font-medium rounded-lg border border-surface-500 hover:border-neutral-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 focus:ring-offset-surface-900;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-neutral-100 hover:bg-surface-700 font-medium rounded-lg transition-all duration-200;
+  }
+  .card {
+    @apply bg-surface-800 border border-surface-600 rounded-xl shadow-card;
+  }
+  .card-hover {
+    @apply card hover:border-surface-500 hover:shadow-card-hover transition-all duration-200;
+  }
+  .input-field {
+    @apply w-full bg-surface-800 border border-surface-600 text-neutral-100 placeholder-neutral-500 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all duration-200;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full;
+  }
+  .badge-brand {
+    @apply badge bg-brand-500/10 text-brand-400 border border-brand-500/20;
+  }
+  .badge-accent {
+    @apply badge bg-accent-500/10 text-accent-400 border border-accent-500/20;
+  }
+  .badge-success {
+    @apply badge bg-success-500/10 text-success-400 border border-success-500/20;
+  }
+  .badge-warning {
+    @apply badge bg-warning-500/10 text-warning-400 border border-warning-500/20;
+  }
+  .badge-error {
+    @apply badge bg-error-500/10 text-error-400 border border-error-500/20;
+  }
+  .section-title {
+    @apply text-2xl font-semibold text-neutral-100;
+  }
+  .section-subtitle {
+    @apply text-sm text-neutral-400;
+  }
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer;
+  }
+  .nav-item-active {
+    @apply nav-item bg-brand-500/15 text-brand-400 border border-brand-500/20;
+  }
+  .nav-item-inactive {
+    @apply nav-item text-neutral-400 hover:text-neutral-100 hover:bg-surface-700;
+  }
+}
