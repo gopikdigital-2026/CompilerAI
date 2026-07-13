@@ -34,3 +34,37 @@ export type { ICompilerCore, ICompilerProvider, ReasoningOutput } from './interf
 export type { IPipeline, PipelineContext, StageStatus } from './interfaces/IPipeline';
 export type { IPlugin, IPluginRegistry } from './interfaces/IPlugin';
 export type { IMemoryProvider, MemoryEntry } from './interfaces/IMemoryProvider';
+
+// ── Intelligence (Context Intelligence Layer) ─────────────────────────────────
+export {
+  ContextIntelligenceService,
+  ContextAnalyzer,
+  ContextEnricher,
+  ContextValidator,
+  maxClassification,
+} from './intelligence';
+export type {
+  ContextIntelligenceDeps,
+  IContextAnalyzer,
+  IContextEnricher,
+  IContextValidator,
+  ContextEnrichment,
+  EnterpriseMemorySnapshot,
+  ValidationOutcome,
+  SufficiencyBreakdown,
+  ContextRequest,
+  BusinessContext,
+  BusinessIntent,
+  BusinessObjective,
+  BusinessEntity,
+  BusinessConstraint,
+  Urgency,
+  RelevantMemory,
+  ContextResult,
+  ContextStatus,
+  ContextSource,
+  SourceKind,
+  DataClassification,
+  MissingInformation,
+  InformationGapKind,
+} from './intelligence';
