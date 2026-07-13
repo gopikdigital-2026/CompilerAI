@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
-import { generateMockBlueprint } from '../lib/blueprintMocks';
 import type { Blueprint, CompilerSession } from '../types/blueprint';
+import { compilerCore } from '../compiler/core';
 
 // ─── DB operations ────────────────────────────────────────────────────────────
 
@@ -42,28 +42,22 @@ export const deleteCompilerSession = async (sessionId: string): Promise<void> =>
   if (error) throw error;
 };
 
-// ─── Compiler engine (mock → replace body with real AI call) ──────────────────
+// ─── Compiler engine — powered by src/compiler/core ──────────────────────────
+// To connect a real LLM provider, call:
+//   compilerCore.setProvider(new OpenAIProvider(apiKey))
+// before invoking compilePrompt.
 
-// This function is intentionally structured to be swapped for a real AI provider.
-// To connect OpenAI: replace the body with `openai.chat.completions.create(...)`.
-// To connect Anthropic: replace with `anthropic.messages.create(...)`.
-// To connect Gemini: replace with `genai.generateContent(...)`.
-export const compilePrompt = async (prompt: string): Promise<Blueprint> => {
-  // Simulate network + AI latency (1.5 – 2.5 s)
-  const delay = 1500 + Math.random() * 1000;
-  await new Promise((resolve) => setTimeout(resolve, delay));
-
-  // TODO: swap with real AI call
-  // Example (OpenAI):
-  // const completion = await openai.chat.completions.create({
-  //   model: 'gpt-4o',
-  //   response_format: { type: 'json_object' },
-  //   messages: [
-  //     { role: 'system', content: BLUEPRINT_SYSTEM_PROMPT },
-  //     { role: 'user', content: prompt },
-  //   ],
-  // });
-  // return JSON.parse(completion.choices[0].message.content!) as Blueprint;
-
-  return generateMockBlueprint(prompt);
+export const compilePrompt = async (
+  prompt: string,
+  opts?: { orgId?: string; userId?: string },
+): Promise<Blueprint> => {
+  const result = await compilerCore.compile(prompt, opts);
+  if (result.status === 'error' || !result.blueprint) {
+    throw new Error(result.error ?? 'Compilation failed');
+  }
+  return result.blueprint;
 };
+
+// Re-export core helpers for advanced usage (streaming, abort, stage labels)
+export { compilerCore };
+
