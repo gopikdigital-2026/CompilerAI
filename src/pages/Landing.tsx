@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { useTranslation } from '../hooks/useTranslation';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../hooks/useLanguage';
 import { Globe } from 'lucide-react';
 
 interface LandingProps {

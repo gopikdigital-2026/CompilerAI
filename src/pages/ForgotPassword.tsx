@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { useTranslation } from '../hooks/useTranslation';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../hooks/useLanguage';
 import { resetPassword } from '../services/auth.service';
 
 interface ForgotPasswordProps {

@@ -1,4 +1,4 @@
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from './useLanguage';
 import { translations } from '../lib/translations';
 
 export function useTranslation() {

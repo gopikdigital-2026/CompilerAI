@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import type { Lang } from '../lib/translations';
 
 interface LanguageContextValue {
@@ -6,7 +6,7 @@ interface LanguageContextValue {
   setLang: (lang: Lang) => void;
 }
 
-const LanguageContext = createContext<LanguageContextValue>({
+export const LanguageContext = createContext<LanguageContextValue>({
   lang: 'es',
   setLang: () => {},
 });
@@ -31,8 +31,4 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       {children}
     </LanguageContext.Provider>
   );
-}
-
-export function useLanguage() {
-  return useContext(LanguageContext);
 }

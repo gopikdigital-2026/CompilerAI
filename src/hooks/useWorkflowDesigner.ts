@@ -41,6 +41,55 @@ export function useWorkflowDesigner() {
   const totalCost = nodes.reduce((sum, n) => sum + (n.estimatedCostUsd ?? 0), 0);
   const totalTime = nodes.reduce((sum, n) => sum + (n.estimatedTimeS ?? 0), 0);
 
+  // ── Save infrastructure ─────────────────────────────────────────────────────
+  // Use refs to avoid stale closures in useCallbacks below
+
+  const saveTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nodesRef      = useRef(nodes);
+  const edgesRef      = useRef(edges);
+  const nameRef       = useRef(workflowName);
+  const activeOrgRef  = useRef(activeOrg);
+  const designIdRef   = useRef(designId);
+  const issuesRef     = useRef(validationIssues);
+
+  nodesRef.current      = nodes;
+  edgesRef.current      = edges;
+  nameRef.current       = workflowName;
+  activeOrgRef.current  = activeOrg;
+  designIdRef.current   = designId;
+  issuesRef.current     = validationIssues;
+
+  const autoSave = useCallback(async () => {
+    const org = activeOrgRef.current;
+    if (!org?.id) return;
+    setSavedStatus('saving');
+    try {
+      const payload = {
+        organization_id: org.id,
+        name: nameRef.current,
+        nodes: nodesRef.current as unknown as Record<string, unknown>[],
+        edges: edgesRef.current as unknown as Record<string, unknown>[],
+        metadata: { versions: [], validationIssues: issuesRef.current },
+      };
+      const currentDesignId = designIdRef.current;
+      if (currentDesignId) {
+        await supabase.from('workflow_designs').update(payload).eq('id', currentDesignId);
+      } else {
+        const { data } = await supabase.from('workflow_designs').insert(payload).select('id').maybeSingle();
+        if (data?.id) setDesignId(data.id);
+      }
+      setSavedStatus('saved');
+    } catch {
+      setSavedStatus('unsaved');
+    }
+  }, []);
+
+  const markUnsaved = useCallback(() => {
+    setSavedStatus('unsaved');
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => autoSave(), 5000);
+  }, [autoSave]);
+
   // ── Node operations ─────────────────────────────────────────────────────────
 
   const addNode = useCallback((type: WorkflowNode['type'], x: number, y: number) => {
@@ -48,36 +97,38 @@ export function useWorkflowDesigner() {
     setNodes(prev => [...prev, node]);
     setSelectedNodeId(node.id);
     markUnsaved();
-  }, []);
+  }, [markUnsaved]);
 
   const moveNode = useCallback((id: string, x: number, y: number) => {
     setNodes(prev => prev.map(n => n.id === id ? { ...n, x, y } : n));
     markUnsaved();
-  }, []);
+  }, [markUnsaved]);
 
   const updateNode = useCallback((id: string, updates: Partial<WorkflowNode>) => {
     setNodes(prev => prev.map(n => n.id === id ? { ...n, ...updates } : n));
     markUnsaved();
-  }, []);
+  }, [markUnsaved]);
 
   const deleteNode = useCallback((id: string) => {
     setNodes(prev => prev.filter(n => n.id !== id));
     setEdges(prev => prev.filter(e => e.sourceNodeId !== id && e.targetNodeId !== id));
-    if (selectedNodeId === id) setSelectedNodeId(null);
+    setSelectedNodeId(prev => prev === id ? null : prev);
     markUnsaved();
-  }, [selectedNodeId]);
+  }, [markUnsaved]);
 
   const duplicateNode = useCallback((id: string) => {
-    const node = nodes.find(n => n.id === id);
-    if (!node) return;
-    const newNode = buildNewNode(node.type, node.x + 40, node.y + 40);
-    newNode.label   = `${node.label} (copia)`;
-    newNode.config  = { ...node.config };
-    newNode.state   = 'pending';
-    setNodes(prev => [...prev, newNode]);
-    setSelectedNodeId(newNode.id);
+    setNodes(prev => {
+      const node = prev.find(n => n.id === id);
+      if (!node) return prev;
+      const newNode = buildNewNode(node.type, node.x + 40, node.y + 40);
+      newNode.label  = `${node.label} (copia)`;
+      newNode.config = { ...node.config };
+      newNode.state  = 'pending';
+      setSelectedNodeId(newNode.id);
+      return [...prev, newNode];
+    });
     markUnsaved();
-  }, [nodes]);
+  }, [markUnsaved]);
 
   const addComment = useCallback((nodeId: string, text: string) => {
     setNodes(prev => prev.map(n => n.id === nodeId ? {
@@ -88,7 +139,7 @@ export function useWorkflowDesigner() {
       }],
     } : n));
     markUnsaved();
-  }, []);
+  }, [markUnsaved]);
 
   // ── Edge operations ─────────────────────────────────────────────────────────
 
@@ -96,23 +147,22 @@ export function useWorkflowDesigner() {
     sourceNodeId: string, sourcePortId: string,
     targetNodeId: string, targetPortId: string,
   ) => {
-    const alreadyExists = edges.some(e =>
-      e.sourceNodeId === sourceNodeId && e.sourcePortId === sourcePortId &&
-      e.targetNodeId === targetNodeId && e.targetPortId === targetPortId
-    );
-    if (alreadyExists) return;
-    const newEdge: WorkflowEdge = {
-      id: `e-${Date.now()}`, sourceNodeId, sourcePortId, targetNodeId, targetPortId,
-    };
-    setEdges(prev => [...prev, newEdge]);
+    setEdges(prev => {
+      const alreadyExists = prev.some(e =>
+        e.sourceNodeId === sourceNodeId && e.sourcePortId === sourcePortId &&
+        e.targetNodeId === targetNodeId && e.targetPortId === targetPortId
+      );
+      if (alreadyExists) return prev;
+      return [...prev, { id: `e-${Date.now()}`, sourceNodeId, sourcePortId, targetNodeId, targetPortId }];
+    });
     markUnsaved();
-  }, [edges]);
+  }, [markUnsaved]);
 
   const deleteEdge = useCallback((id: string) => {
     setEdges(prev => prev.filter(e => e.id !== id));
-    if (selectedEdgeId === id) setSelectedEdgeId(null);
+    setSelectedEdgeId(prev => prev === id ? null : prev);
     markUnsaved();
-  }, [selectedEdgeId]);
+  }, [markUnsaved]);
 
   // ── Selection ───────────────────────────────────────────────────────────────
 
@@ -126,57 +176,22 @@ export function useWorkflowDesigner() {
     setSelectedNodeId(null);
   }, []);
 
-  // ── Save ────────────────────────────────────────────────────────────────────
-
-  const saveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function markUnsaved() {
-    setSavedStatus('unsaved');
-    if (saveRef.current) clearTimeout(saveRef.current);
-    saveRef.current = setTimeout(() => autoSave(), 5000);
-  }
-
-  async function autoSave() {
-    if (!activeOrg?.id) return;
-    setSavedStatus('saving');
-    try {
-      const payload = {
-        organization_id: activeOrg.id,
-        name: workflowName,
-        nodes: nodes as unknown as Record<string, unknown>[],
-        edges: edges as unknown as Record<string, unknown>[],
-        metadata: { versions: [], validationIssues },
-      };
-      if (designId) {
-        await supabase.from('workflow_designs').update(payload).eq('id', designId);
-      } else {
-        const { data } = await supabase.from('workflow_designs').insert(payload).select('id').maybeSingle();
-        if (data?.id) setDesignId(data.id);
-      }
-      setSavedStatus('saved');
-    } catch {
-      setSavedStatus('unsaved');
-    }
-  }
-
-  const save = useCallback(() => autoSave(), [nodes, edges, workflowName, activeOrg]);
-
   // ── Optimize ────────────────────────────────────────────────────────────────
 
   const runOptimize = useCallback(async () => {
     setIsOptimizing(true);
     setShowOptimize(true);
     await new Promise(r => setTimeout(r, 1800));
-    setOptimizations(buildOptimizationSuggestions(nodes));
+    setOptimizations(buildOptimizationSuggestions(nodesRef.current));
     setIsOptimizing(false);
-  }, [nodes]);
+  }, []);
 
   // ── Select all / delete selected ────────────────────────────────────────────
 
   const deleteSelected = useCallback(() => {
-    if (selectedNodeId) deleteNode(selectedNodeId);
-    if (selectedEdgeId) deleteEdge(selectedEdgeId);
-  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge]);
+    setSelectedNodeId(prev => { if (prev) deleteNode(prev); return null; });
+    setSelectedEdgeId(prev => { if (prev) deleteEdge(prev); return null; });
+  }, [deleteNode, deleteEdge]);
 
   return {
     // Data
@@ -213,6 +228,6 @@ export function useWorkflowDesigner() {
     totalCost, totalTime,
 
     // Save
-    save, deleteSelected,
+    save: autoSave, deleteSelected,
   };
 }

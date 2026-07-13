@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Search, Bell, ChevronDown, X, Globe } from 'lucide-react';
 import { MOCK_NOTIFICATIONS } from '../../lib/mockData';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import type { DashboardPage } from './Sidebar';

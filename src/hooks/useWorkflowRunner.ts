@@ -79,6 +79,8 @@ async function persistRunComplete(
 
 export function useWorkflowRunner() {
   const { activeOrg } = useOrganization();
+  const activeOrgRef = useRef(activeOrg);
+  activeOrgRef.current = activeOrg;
   const [selectedBlueprint, setSelectedBlueprintState] = useState<Blueprint | null>(null);
   const [execState, setExecState] = useState<ExecutionState>(makeInitialState());
   const [summary, setSummary] = useState<ExecutionSummaryData | null>(null);
@@ -108,8 +110,9 @@ export function useWorkflowRunner() {
     const steps = makeInitialSteps(selectedBlueprint);
 
     // Persist start
-    const runId = activeOrg
-      ? await persistRunStart(activeOrg.id, selectedBlueprint).catch(() => `local_${Date.now()}`)
+    const org = activeOrgRef.current;
+    const runId = org
+      ? await persistRunStart(org.id, selectedBlueprint).catch(() => `local_${Date.now()}`)
       : `local_${Date.now()}`;
     runIdRef.current = runId;
 
@@ -258,10 +261,10 @@ export function useWorkflowRunner() {
     }));
 
     // Persist to DB
-    if (!runIdRef.current.startsWith('local_') && activeOrg) {
+    if (!runIdRef.current.startsWith('local_') && activeOrgRef.current) {
       persistRunComplete(runIdRef.current, finalSummary, allLogs).catch(() => {});
     }
-  }, [selectedBlueprint, execState.status, activeOrg?.id]);
+  }, [selectedBlueprint, execState.status]);
 
   const stopExecution = useCallback(() => {
     abortRef.current = true;

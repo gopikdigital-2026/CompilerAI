@@ -38,14 +38,20 @@ export function SettingsPage() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [orgSaved, setOrgSaved] = useState(false);
 
-  // Sync form values when data loads
+  // Sync form values when data loads — use .id as a stable key to avoid
+  // re-syncing on every unrelated render while still catching actual data changes
+  const profileId = profile?.id;
+  const activeOrgId = activeOrg?.id;
+
   React.useEffect(() => {
     if (profile) setProfileForm({ full_name: profile.full_name ?? '', job_title: profile.job_title ?? '' });
-  }, [profile?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
 
   React.useEffect(() => {
     if (activeOrg) setOrgName(activeOrg.name);
-  }, [activeOrg?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeOrgId]);
 
   const handleSaveProfile = async () => {
     await updateProfile(profileForm);

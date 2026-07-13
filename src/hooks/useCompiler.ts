@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOrganization } from './useOrganization';
 import {
   compilePrompt,
@@ -28,6 +28,9 @@ const COMPILE_STEPS_EN = [
 
 export function useCompiler(lang: string) {
   const { activeOrg } = useOrganization();
+  const activeOrgId = activeOrg?.id ?? null;
+  const activeOrgRef = useRef(activeOrg);
+  activeOrgRef.current = activeOrg;
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState<CompileStatus>('idle');
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
@@ -40,16 +43,17 @@ export function useCompiler(lang: string) {
 
   // Load history when org is available
   useEffect(() => {
-    if (!activeOrg) { setLoadingHistory(false); return; }
+    if (!activeOrgId) { setLoadingHistory(false); return; }
     setLoadingHistory(true);
-    getCompilerSessions(activeOrg.id)
+    getCompilerSessions(activeOrgId)
       .then(setSessions)
       .catch(() => setSessions([]))
       .finally(() => setLoadingHistory(false));
-  }, [activeOrg?.id]);
+  }, [activeOrgId]);
 
   const compile = useCallback(async () => {
-    if (!prompt.trim() || !activeOrg) return;
+    const org = activeOrgRef.current;
+    if (!prompt.trim() || !org) return;
     setStatus('compiling');
     setBlueprint(null);
     setError(null);
@@ -69,7 +73,7 @@ export function useCompiler(lang: string) {
       setStatus('complete');
 
       // Persist to DB in background
-      saveCompilerSession(activeOrg.id, prompt, result)
+      saveCompilerSession(org.id, prompt, result)
         .then((session) => setSessions((prev) => [session, ...prev]))
         .catch(() => { /* non-fatal */ });
     } catch (err) {
@@ -77,7 +81,7 @@ export function useCompiler(lang: string) {
       setError(err instanceof Error ? err.message : 'Compilation failed');
       setStatus('error');
     }
-  }, [prompt, activeOrg?.id, STEPS.length]);
+  }, [prompt, STEPS.length]);
 
   const loadSession = useCallback((session: CompilerSession) => {
     setPrompt(session.prompt);

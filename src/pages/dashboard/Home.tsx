@@ -4,7 +4,7 @@ import { BarChart } from '../../components/ui/BarChart';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { MOCK_AGENTS, MOCK_WORKFLOWS } from '../../lib/mockData';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useLanguage } from '../../hooks/useLanguage';
 import { useProfile } from '../../hooks/useProfile';
 import { useOrganization } from '../../hooks/useOrganization';
 import { useAuth } from '../../hooks/useAuth';

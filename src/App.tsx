@@ -1,6 +1,6 @@
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import { Dashboard } from './pages/Dashboard';
 
 function AppRouter() {
