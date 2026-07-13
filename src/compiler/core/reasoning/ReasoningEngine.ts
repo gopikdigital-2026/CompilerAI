@@ -75,6 +75,7 @@ export class ReasoningEngine {
       services:       c.services,
       complexity,
       confidence:     c.confidence,
+      hasAI:          c.hasAI ?? false,
       chainOfThought,
     };
   }

@@ -1,4 +1,4 @@
-import type { Blueprint } from '../../types/blueprint';
+import type { Blueprint } from '../../../types/blueprint';
 import type { CompilationRequest, CompilationResult } from '../models/CompilationResult';
 import type { PipelineStage } from '../models/PipelineStage';
 import type { CompilerEvent } from '../models/CompilerEvent';
@@ -45,5 +45,6 @@ export interface ReasoningOutput {
   services:       string[];
   complexity:     'simple' | 'medium' | 'complex';
   confidence:     number;
+  hasAI:          boolean;
   chainOfThought: string[];
 }

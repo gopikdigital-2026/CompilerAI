@@ -1,18 +1,10 @@
-import React, { useState } from 'react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/AuthContext';
-import { Landing } from './pages/Landing';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
 
-type PublicPage = 'landing' | 'login' | 'register' | 'forgot-password';
-
 function AppRouter() {
-  const { session, loading, signOut } = useAuth();
-  const [publicPage, setPublicPage] = useState<PublicPage>('landing');
+  const { loading } = useAuth();
 
   if (loading) {
     return (

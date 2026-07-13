@@ -1,4 +1,3 @@
-import React from 'react';
 
 interface BarChartProps {
   data: { label: string; value: number }[];

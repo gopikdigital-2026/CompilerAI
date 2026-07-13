@@ -12,8 +12,6 @@ import { useWorkflowDesigner } from '../../hooks/useWorkflowDesigner';
 export default function WorkflowDesigner() {
   const w = useWorkflowDesigner();
   const [paletteSearch, setPaletteSearch] = useState('');
-  const [pan,  setPan]  = useState({ x: 80, y: 60 });
-  const [zoom, setZoom] = useState(0.85);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -53,7 +51,7 @@ export default function WorkflowDesigner() {
             onDeleteNode={w.deleteNode}
             onDeleteEdge={w.deleteEdge}
           >
-            <MiniMap nodes={w.nodes} edges={w.edges} pan={pan} zoom={zoom} />
+            <MiniMap nodes={w.nodes} edges={w.edges} />
           </WorkflowCanvas>
         </div>
 

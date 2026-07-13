@@ -8,11 +8,9 @@ const PADDING = 20;
 interface MiniMapProps {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
-  pan:   { x: number; y: number };
-  zoom:  number;
 }
 
-export function MiniMap({ nodes, edges, pan, zoom }: MiniMapProps) {
+export function MiniMap({ nodes, edges }: MiniMapProps) {
   if (nodes.length === 0) return null;
 
   const xs = nodes.map(n => n.x);

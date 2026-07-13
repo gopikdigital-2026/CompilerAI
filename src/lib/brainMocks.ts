@@ -1,5 +1,5 @@
 import type {
-  BrainDecision, MasterPlan, PlanObjective, ReasoningChain, ReasoningStep,
+  BrainDecision, MasterPlan, ReasoningChain,
   Strategy, BrainRisk, BrainOptimization, BrainStats,
 } from '../types/brain';
 

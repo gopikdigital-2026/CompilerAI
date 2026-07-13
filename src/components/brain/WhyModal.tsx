@@ -1,7 +1,6 @@
-import React from 'react';
 import {
   X, HelpCircle, CheckCircle2, XCircle, AlertTriangle,
-  Bot, Wrench, Tag, ChevronRight,
+  Bot, Wrench, Tag,
 } from 'lucide-react';
 import type { BrainDecision, RiskLevel, DecisionStatus } from '../../types/brain';
 

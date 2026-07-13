@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, Clock, Wrench, AlertTriangle, ChevronDown, ChevronRight, Package, GitBranch, Layers } from 'lucide-react';
+import { CheckCircle, Clock, Wrench, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { ARCH_MODULES, ROADMAP } from '../../lib/enterpriseMocks';
 import type { ModuleStatus, RiskLevel } from '../../types/enterprise';
 
@@ -32,7 +32,7 @@ export function ArchitectureReview() {
   function toggleExpand(id: string) {
     setExpanded(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }

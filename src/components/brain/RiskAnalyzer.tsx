@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  AlertTriangle, AlertCircle, CheckCircle2, Info,
-  ShieldCheck, ShieldAlert, X,
+  AlertCircle, CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
 import type { BrainRisk, RiskLevel, RiskCategory } from '../../types/brain';
 

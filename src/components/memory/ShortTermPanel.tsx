@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, MousePointerClick, AlertCircle, GitBranch, Clock, Activity } from 'lucide-react';
+import { Zap, AlertCircle, GitBranch, Clock, Activity } from 'lucide-react';
 import type { ShortTermEntry, ShortTermEventType } from '../../types/memory';
 
 const EVENT_CONFIG: Record<ShortTermEventType, { label: string; color: string; border: string; icon: React.ReactNode }> = {

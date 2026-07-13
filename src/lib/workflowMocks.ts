@@ -13,20 +13,20 @@ export const GRID_SIZE   = 20;
 // ─── Node type config ─────────────────────────────────────────────────────────
 
 export const NODE_TYPE_CONFIG = {
-  agent:        { label: 'Agente',       color: '#38bdf8', bg: 'rgba(56,189,248,0.08)',  category: 'action'  },
-  condition:    { label: 'Condición',    color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  category: 'control' },
-  api:          { label: 'API',          color: '#60a5fa', bg: 'rgba(96,165,250,0.08)',  category: 'action'  },
-  database:     { label: 'Base de datos',color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', category: 'data'    },
-  email:        { label: 'Email',        color: '#22d3ee', bg: 'rgba(34,211,238,0.08)',  category: 'trigger' },
-  webhook:      { label: 'Webhook',      color: '#fb923c', bg: 'rgba(251,146,60,0.08)',  category: 'trigger' },
-  loop:         { label: 'Loop',         color: '#facc15', bg: 'rgba(250,204,21,0.08)',  category: 'control' },
-  wait:         { label: 'Espera',       color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', category: 'control' },
-  document:     { label: 'Documento',    color: '#34d399', bg: 'rgba(52,211,153,0.08)',  category: 'action'  },
-  ai:           { label: 'IA',           color: '#f472b6', bg: 'rgba(244,114,182,0.08)', category: 'ai'      },
-  notification: { label: 'Notificación', color: '#2dd4bf', bg: 'rgba(45,212,191,0.08)', category: 'action'  },
-  variables:    { label: 'Variables',    color: '#4ade80', bg: 'rgba(74,222,128,0.08)',  category: 'data'    },
-  function:     { label: 'Función',      color: '#c084fc', bg: 'rgba(192,132,252,0.08)', category: 'util'    },
-  subworkflow:  { label: 'Sub-workflow', color: '#38bdf8', bg: 'rgba(56,189,248,0.06)',  category: 'util'    },
+  agent:        { label: 'Agente',       color: '#38bdf8', bg: 'rgba(56,189,248,0.08)',  category: 'action',  icon: '🤖' },
+  condition:    { label: 'Condición',    color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  category: 'control', icon: '⚡' },
+  api:          { label: 'API',          color: '#60a5fa', bg: 'rgba(96,165,250,0.08)',  category: 'action',  icon: '🔌' },
+  database:     { label: 'Base de datos',color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', category: 'data',    icon: '🗄️' },
+  email:        { label: 'Email',        color: '#22d3ee', bg: 'rgba(34,211,238,0.08)',  category: 'trigger', icon: '✉️' },
+  webhook:      { label: 'Webhook',      color: '#fb923c', bg: 'rgba(251,146,60,0.08)',  category: 'trigger', icon: '🔗' },
+  loop:         { label: 'Loop',         color: '#facc15', bg: 'rgba(250,204,21,0.08)',  category: 'control', icon: '🔄' },
+  wait:         { label: 'Espera',       color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', category: 'control', icon: '⏱️' },
+  document:     { label: 'Documento',    color: '#34d399', bg: 'rgba(52,211,153,0.08)',  category: 'action',  icon: '📄' },
+  ai:           { label: 'IA',           color: '#f472b6', bg: 'rgba(244,114,182,0.08)', category: 'ai',      icon: '✨' },
+  notification: { label: 'Notificación', color: '#2dd4bf', bg: 'rgba(45,212,191,0.08)', category: 'action',  icon: '🔔' },
+  variables:    { label: 'Variables',    color: '#4ade80', bg: 'rgba(74,222,128,0.08)',  category: 'data',    icon: '📦' },
+  function:     { label: 'Función',      color: '#c084fc', bg: 'rgba(192,132,252,0.08)', category: 'util',    icon: '⚙️' },
+  subworkflow:  { label: 'Sub-workflow', color: '#38bdf8', bg: 'rgba(56,189,248,0.06)',  category: 'util',    icon: '🔀' },
 } as const;
 
 export const STATE_CONFIG = {

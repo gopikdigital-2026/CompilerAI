@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Bot, Plus, Search, MoreHorizontal, Play, Pause, Trash2, TrendingUp } from 'lucide-react';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { EmptyState } from '../../components/ui/EmptyState';

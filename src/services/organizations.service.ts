@@ -13,7 +13,7 @@ export const getMyOrganizations = async (): Promise<OrgWithRole[]> => {
     .select('role, organizations(*)')
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as any[]).map((m) => ({
+  return ((data ?? []) as Record<string, unknown>[]).map((m) => ({
     ...(m.organizations as Organization),
     role: m.role as OrgWithRole['role'],
   }));
@@ -39,7 +39,7 @@ export const getOrgMembers = async (organizationId: string): Promise<OrgMember[]
     .select('id, role, created_at, profiles(id, full_name, avatar_url, job_title)')
     .eq('organization_id', organizationId);
   if (error) throw error;
-  return ((data ?? []) as any[]).map((m) => ({
+  return ((data ?? []) as Record<string, unknown>[]).map((m) => ({
     id: m.id as string,
     role: m.role as OrgMember['role'],
     created_at: m.created_at as string,

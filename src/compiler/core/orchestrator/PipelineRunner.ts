@@ -111,7 +111,7 @@ export class PipelineRunner implements IPipeline {
         durationMs,
         provider:    this.provider.name,
         model:       this.provider.model,
-        warnings:    validationReport!.warnings.map(w => w.message),
+        warnings:    validationReport!.warnings.map((w: { message: string }) => w.message),
         completedAt: new Date().toISOString(),
       };
 

@@ -1,22 +1,15 @@
 import type { CompilationResult } from '../models/CompilationResult';
+import type { PipelineStage } from '../models/PipelineStage';
 
 // ─── Pipeline stage definition ────────────────────────────────────────────────
 
 export type StageStatus = 'pending' | 'running' | 'complete' | 'error' | 'skipped';
 
-export interface PipelineStageDefinition {
-  id:          string;
-  label:       string;        // display label
-  description: string;
-  estimatedMs: number;        // typical wall-clock time
-  required:    boolean;
-}
-
 // ─── Pipeline interface ───────────────────────────────────────────────────────
 
 export interface IPipeline {
   readonly id:     string;
-  readonly stages: PipelineStageDefinition[];
+  readonly stages: PipelineStage[];
 
   /** Run all stages sequentially and return the final result. */
   run(ctx: PipelineContext): Promise<CompilationResult>;

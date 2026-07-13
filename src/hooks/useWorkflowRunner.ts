@@ -14,7 +14,7 @@ import {
 import type { Blueprint } from '../types/blueprint';
 import type {
   ExecutionState, ExecutionStep, LogEntry, RunStatus,
-  ActiveAgentSnapshot, ExecutionSummaryData,
+  ExecutionSummaryData,
 } from '../types/execution';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

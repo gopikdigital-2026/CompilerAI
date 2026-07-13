@@ -12,6 +12,7 @@ interface ServiceDef {
   authType: AuthType;
   setupTime: string;
   keywords: string[];
+  required?: boolean;
 }
 
 const SERVICES: ServiceDef[] = [

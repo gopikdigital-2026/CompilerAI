@@ -44,6 +44,7 @@ export class SimulationProvider implements ICompilerProvider {
       services:       c.services,
       complexity:     c.services.length > 3 ? 'complex' : c.services.length > 1 ? 'medium' : 'simple',
       confidence:     c.confidence,
+      hasAI:          c.hasAI ?? false,
       chainOfThought,
     };
   }

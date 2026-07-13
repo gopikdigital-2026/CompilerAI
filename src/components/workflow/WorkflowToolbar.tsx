@@ -1,4 +1,4 @@
-import { Save, GitBranch, Play, Download, Upload, Share2, AlertTriangle, CheckCircle, Loader2, Sparkles, ChevronDown } from 'lucide-react';
+import { Save, GitBranch, Play, Download, Upload, Share2, AlertTriangle, CheckCircle, Loader2, Sparkles } from 'lucide-react';
 
 interface WorkflowToolbarProps {
   workflowName:  string;

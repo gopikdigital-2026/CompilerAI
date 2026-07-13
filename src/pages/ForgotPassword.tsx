@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { useTranslation } from '../hooks/useTranslation';
+import { useLanguage } from '../contexts/LanguageContext';
 import { resetPassword } from '../services/auth.service';
 
 interface ForgotPasswordProps {
@@ -10,6 +11,7 @@ interface ForgotPasswordProps {
 
 export function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
   const { t } = useTranslation();
+  const { lang } = useLanguage();
   const a = t.auth;
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,10 +50,10 @@ export function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
           <p className="text-neutral-400 text-base leading-relaxed mb-8">{a.resetPasswordWelcomeSub}</p>
           <div className="space-y-4">
             {[
-              { step: '1', label: t.lang === 'es' ? 'Introduce tu email de acceso' : 'Enter your sign-in email' },
-              { step: '2', label: t.lang === 'es' ? 'Revisa tu bandeja de entrada' : 'Check your inbox' },
-              { step: '3', label: t.lang === 'es' ? 'Haz clic en el enlace de recuperación' : 'Click the recovery link' },
-              { step: '4', label: t.lang === 'es' ? 'Establece una nueva contraseña' : 'Set a new password' },
+              { step: '1', label: lang === 'es' ? 'Introduce tu email de acceso' : 'Enter your sign-in email' },
+              { step: '2', label: lang === 'es' ? 'Revisa tu bandeja de entrada' : 'Check your inbox' },
+              { step: '3', label: lang === 'es' ? 'Haz clic en el enlace de recuperación' : 'Click the recovery link' },
+              { step: '4', label: lang === 'es' ? 'Establece una nueva contraseña' : 'Set a new password' },
             ].map((item) => (
               <div key={item.step} className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-full bg-brand-500/20 border border-brand-500/30 flex items-center justify-center flex-shrink-0">
@@ -84,7 +86,7 @@ export function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
               </div>
               <h1 className="text-2xl font-bold text-neutral-100 mb-2">{a.resetEmailSent}</h1>
               <p className="text-sm text-neutral-500 mb-8 leading-relaxed">
-                {t.lang === 'es'
+                {lang === 'es'
                   ? `Hemos enviado un enlace a ${email}. El enlace expira en 1 hora.`
                   : `We sent a link to ${email}. The link expires in 1 hour.`}
               </p>
@@ -125,7 +127,7 @@ export function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                   disabled={!email.trim() || loading}
                   className="btn-primary w-full justify-center py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? (t.lang === 'es' ? 'Enviando...' : 'Sending...') : a.sendResetLink}
+                  {loading ? (lang === 'es' ? 'Enviando...' : 'Sending...') : a.sendResetLink}
                 </button>
               </form>
 

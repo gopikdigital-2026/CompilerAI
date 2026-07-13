@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { DollarSign, TrendingUp, Zap } from 'lucide-react';
 import {
   COSTS_BY_WORKFLOW, COSTS_BY_AGENT, COSTS_BY_MODEL, MONTHLY_PREDICTION,
 } from '../../lib/enterpriseMocks';
@@ -41,7 +40,7 @@ export function CostIntelligence() {
       {/* Workflow costs */}
       {tab === 'workflow' && (
         <div className="space-y-2">
-          {COSTS_BY_WORKFLOW.map((w, i) => {
+          {COSTS_BY_WORKFLOW.map((w) => {
             const max = COSTS_BY_WORKFLOW[0].costUsd;
             const pct = (w.costUsd / max) * 100;
             return (
@@ -96,7 +95,7 @@ export function CostIntelligence() {
               </tr>
             </thead>
             <tbody>
-              {COSTS_BY_MODEL.map((m, i) => {
+              {COSTS_BY_MODEL.map((m) => {
                 const color = PROVIDER_COLORS[m.provider] ?? '#94a3b8';
                 return (
                   <tr key={m.model} className="border-b border-surface-700/50 hover:bg-surface-700/30 transition-colors">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, Bell, ChevronDown, X, Globe } from 'lucide-react';
 import { MOCK_NOTIFICATIONS } from '../../lib/mockData';
 import { useTranslation } from '../../hooks/useTranslation';

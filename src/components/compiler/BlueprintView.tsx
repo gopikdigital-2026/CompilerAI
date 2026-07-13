@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  FileText, Target, ArrowDownCircle, ArrowUpCircle, Bot, Wrench,
+  Target, ArrowDownCircle, ArrowUpCircle, Bot, Wrench,
   Plug, GitBranch, AlertTriangle, DollarSign, Clock, TrendingUp,
   CheckCircle2, XCircle, AlertCircle, ChevronRight, Zap, Download,
 } from 'lucide-react';

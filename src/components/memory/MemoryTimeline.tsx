@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { MemoryEntry, MemoryType } from '../../types/memory';
 
 const TYPE_CONFIG: Record<MemoryType, { color: string; dot: string; label: string }> = {

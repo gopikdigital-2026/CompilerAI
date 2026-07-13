@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Terminal } from 'lucide-react';
 import type { LogEntry, LogLevel } from '../../types/execution';
 

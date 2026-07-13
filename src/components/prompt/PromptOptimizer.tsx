@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Zap, DollarSign, Shield, Building2, Scissors, CheckCircle2,
+  Zap, Shield, Building2, Scissors, CheckCircle2,
   Loader2, Layers, Copy, ArrowRight,
 } from 'lucide-react';
 import type { PromptVariant, VariantType, OptimizationStatus } from '../../types/prompt';

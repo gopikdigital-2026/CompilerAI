@@ -15,7 +15,7 @@ interface PortProps {
   onEndConnect?:   (nodeId: string, portId: string) => void;
 }
 
-function PortCircle({ x, y, color, label, portId, nodeId, portType, isHighlighted, onStartConnect, onEndConnect }: PortProps) {
+function PortCircle({ x, y, color, portId, nodeId, portType, isHighlighted, onStartConnect, onEndConnect }: PortProps) {
   return (
     <g>
       {/* Hit area */}
@@ -52,15 +52,13 @@ interface NodeProps {
   onEndConnect:   (nodeId: string, portId: string) => void;
 }
 
-function NodeCard({ node, isSelected, isConnecting, zoom, onClick, onMouseDown, onStartConnect, onEndConnect }: NodeProps) {
+function NodeCard({ node, isSelected, isConnecting: _isConnecting, zoom: _zoom, onClick, onMouseDown, onStartConnect, onEndConnect }: NodeProps) {
   const cfg   = NODE_TYPE_CONFIG[node.type];
   const state = STATE_CONFIG[node.state];
   const hasComments = node.comments.length > 0;
 
   const inputY  = node.y + NODE_HEIGHT / 2;
   const inputX  = node.x;
-  const outBase = node.y + (node.outputs.length === 1 ? NODE_HEIGHT / 2 : NODE_HEIGHT / 3);
-  const outStep = node.outputs.length > 1 ? NODE_HEIGHT / 3 : 0;
 
   return (
     <g>
@@ -201,8 +199,6 @@ function EdgePath({ edge, nodes, isSelected, onClick }: {
   const dx = Math.max(60, Math.abs(x2 - x1) * 0.5);
   const d  = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
 
-  const srcCfg = NODE_TYPE_CONFIG[src.type];
-
   return (
     <g onClick={e => { e.stopPropagation(); onClick(edge.id); }} style={{ cursor: 'pointer' }}>
       {/* Hit area */}
@@ -238,7 +234,7 @@ function GhostEdge({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2:
 
 // ─── Canvas grid ──────────────────────────────────────────────────────────────
 
-function GridPattern({ zoom }: { zoom: number }) {
+function GridPattern({ zoom: _zoom }: { zoom: number }) {
   const g = 20;
   return (
     <defs>
@@ -259,7 +255,6 @@ function ArrowMarkers() {
   return (
     <defs>
       {Object.keys(NODE_TYPE_CONFIG).map(type => {
-        const color = NODE_TYPE_CONFIG[type as keyof typeof NODE_TYPE_CONFIG].color;
         return (
           <marker key={type} id={`arrowhead-${type}`} markerWidth="8" markerHeight="8"
             refX="7" refY="3" orient="auto">
@@ -388,7 +383,7 @@ export function WorkflowCanvas({
     }
   }, [onMoveNode, screenToCanvas]);
 
-  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+  const handleMouseUp = useCallback((_e: React.MouseEvent) => {
     panRef.current  = null;
     dragRef.current = null;
     if (connectRef.current) {

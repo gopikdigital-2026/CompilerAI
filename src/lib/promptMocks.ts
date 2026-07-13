@@ -1,6 +1,6 @@
 import type {
   PromptAnalysis, PromptVariant, IntentResult, AISuggestion,
-  PromptScoreMetrics, PromptSession, PromptVersion,
+  PromptScoreMetrics, PromptVersion,
 } from '../types/prompt';
 
 // ─── Default example prompt ───────────────────────────────────────────────────
@@ -140,7 +140,6 @@ export function buildMockVariants(prompt: string): PromptVariant[] {
 // ─── Intent detection ─────────────────────────────────────────────────────────
 
 export function buildMockIntents(prompt: string): IntentResult[] {
-  const p = prompt.toLowerCase();
   const base: IntentResult[] = [
     {
       type: 'automation', label: 'Automatización', icon: 'Zap', detected: true,

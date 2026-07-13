@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 
 type StatusType = 'active' | 'idle' | 'error' | 'training' | 'paused' | 'draft' | 'connected' | 'disconnected';

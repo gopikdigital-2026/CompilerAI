@@ -143,7 +143,7 @@ export function buildLogEntry(tpl: LogTemplate, baseTs: number, offsetMs: number
 
 // ─── Token / cost simulation per step ────────────────────────────────────────
 
-export function simulateStepTokens(stepIndex: number, agentEstimate = 500): number {
+export function simulateStepTokens(_stepIndex: number, agentEstimate = 500): number {
   const variance = 0.6 + Math.random() * 0.8;
   return Math.round(agentEstimate * variance);
 }
@@ -163,7 +163,7 @@ export function simulateStepCost(tokens: number, model: string): number {
 // ─── Step timing ──────────────────────────────────────────────────────────────
 // Returns how many ms to wait per log message for a given step (for demo pacing)
 
-export function getLogIntervalMs(stepIndex: number): number {
+export function getLogIntervalMs(_stepIndex: number): number {
   return 280 + Math.random() * 200;
 }
 
@@ -185,7 +185,7 @@ const OPTIMIZATION_POOL = [
   'Activa streaming en el Analysis Agent para mostrar resultados parciales antes de completar el análisis.',
 ];
 
-export function generateOptimizations(agentCount: number, durationMs: number): string[] {
+export function generateOptimizations(agentCount: number, _durationMs: number): string[] {
   const shuffled = [...OPTIMIZATION_POOL].sort(() => Math.random() - 0.5);
   const count = agentCount > 4 ? 4 : agentCount > 2 ? 3 : 2;
   return shuffled.slice(0, count);

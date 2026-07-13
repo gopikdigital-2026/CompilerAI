@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-  Brain, CheckCircle2, GitBranch, Layers, Shield, TrendingUp,
-  Zap, AlertTriangle, Activity, Target,
+  Brain, CheckCircle2, Layers, Shield, TrendingUp,
+  AlertTriangle, Target,
 } from 'lucide-react';
 import { useBrain } from '../../hooks/useBrain';
 import type { BrainModule } from '../../types/brain';
@@ -65,7 +65,7 @@ export default function AIBrain() {
           <DecisionCenter
             decisions={decisions}
             filter={decisionFilter}
-            onFilterChange={f => setDecisionFilter(f as any)}
+            onFilterChange={f => setDecisionFilter(f as 'all' | 'pending')}
             onOpenWhy={openWhy}
           />
         );

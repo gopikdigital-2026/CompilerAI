@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { GRAPH_NODES, GRAPH_EDGES } from '../../lib/memoryMocks';
 import type { GraphNode, GraphNodeType } from '../../types/memory';
 
@@ -97,7 +97,7 @@ export function SemanticGraph() {
       >
         <defs>
           {/* Glow filters per type */}
-          {(Object.entries(NODE_COLORS) as [GraphNodeType, typeof NODE_COLORS[GraphNodeType]][]).map(([type, cfg]) => (
+          {(Object.entries(NODE_COLORS) as [GraphNodeType, typeof NODE_COLORS[GraphNodeType]][]).map(([type, _cfg]) => (
             <filter key={type} id={`glow-${type}`} x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="4" result="blur" />
               <feMerge>

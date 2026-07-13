@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle, AlertCircle, Wrench } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle } from 'lucide-react';
 import { GLOBAL_KPIS, SYSTEM_STATUS } from '../../lib/enterpriseMocks';
 import type { SystemStatus } from '../../types/enterprise';
 

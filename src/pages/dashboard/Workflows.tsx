@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { GitBranch, Plus, Search, Play, Pause, MoreHorizontal, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { EmptyState } from '../../components/ui/EmptyState';

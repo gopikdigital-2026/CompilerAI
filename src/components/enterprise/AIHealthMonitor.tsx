@@ -1,4 +1,4 @@
-import { CheckCircle, AlertTriangle, AlertCircle, Clock, Activity, Cpu } from 'lucide-react';
+import { CheckCircle, AlertTriangle, AlertCircle, Clock } from 'lucide-react';
 import { AI_MODULES } from '../../lib/enterpriseMocks';
 import type { ModuleHealth } from '../../types/enterprise';
 

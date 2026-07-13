@@ -1,4 +1,3 @@
-import React from 'react';
 import { Activity, AlertCircle, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart } from '../../components/ui/BarChart';
 import { Sparkline } from '../../components/ui/Sparkline';

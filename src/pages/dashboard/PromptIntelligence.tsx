@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-  Wand2, Brain, Target, Layers, MessageSquarePlus, Activity,
-  Sparkles, Loader2, CheckCircle2, AlertTriangle, Hash, Type,
+  Wand2, Brain, Target, Layers, MessageSquarePlus,
+  Loader2, CheckCircle2, AlertTriangle, Hash, Type,
 } from 'lucide-react';
 import { usePromptIntelligence } from '../../hooks/usePromptIntelligence';
 import { PromptEditor } from '../../components/prompt/PromptEditor';

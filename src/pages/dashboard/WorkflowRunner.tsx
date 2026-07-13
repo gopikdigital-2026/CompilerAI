@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Play, Square, RotateCcw, PlayCircle, Layers, Bot,
-  ChevronRight, Clock, Sparkles, Zap, AlertTriangle,
+  ChevronRight, Sparkles, Zap, AlertTriangle,
 } from 'lucide-react';
 import { WorkflowDiagram } from '../../components/runner/WorkflowDiagram';
 import { AgentPanel } from '../../components/runner/AgentPanel';
@@ -188,7 +188,7 @@ function CenterHeader({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function WorkflowRunner() {
-  const { t, lang } = useTranslation();
+  const { lang } = useTranslation();
   const isEs = lang === 'es';
   const [logHeight] = useState(200);
 

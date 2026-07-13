@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Zap, DollarSign, Shield, Building2, Star, Clock,
-  TrendingUp, AlertTriangle, CheckCircle2, Users,
+  Zap, DollarSign, Shield, Building2, Star,
+  AlertTriangle, CheckCircle2, Users,
 } from 'lucide-react';
 import type { Strategy, StrategyType } from '../../types/brain';
 

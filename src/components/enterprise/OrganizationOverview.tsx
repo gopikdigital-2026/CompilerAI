@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Building2, Shield, Activity, Clock, CheckCircle } from 'lucide-react';
+import { Users, Building2, Shield, Clock, CheckCircle } from 'lucide-react';
 import { ORG_USERS, ORG_RECORDS, ACTIVITY_FEED } from '../../lib/enterpriseMocks';
 import type { UserRole } from '../../types/enterprise';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   CheckCircle2, XCircle, Clock, Zap, DollarSign, Bot,
-  TrendingUp, Lightbulb, RotateCcw, Play,
+  Lightbulb, RotateCcw, Play,
 } from 'lucide-react';
 import type { ExecutionSummaryData } from '../../types/execution';
 

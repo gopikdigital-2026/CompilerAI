@@ -1,6 +1,6 @@
 import type { IPlugin } from '../interfaces/IPlugin';
 import type { PipelineContext } from '../interfaces/IPipeline';
-import type { Blueprint, BlueprintAgent, AgentModel } from '../../../types/blueprint';
+import type { BlueprintAgent, AgentModel } from '../../../types/blueprint';
 import type { ReasoningOutput } from '../interfaces/ICompilerCore';
 
 // ─── Agent Factory Tool ───────────────────────────────────────────────────────

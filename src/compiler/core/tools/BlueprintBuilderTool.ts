@@ -206,8 +206,8 @@ export class BlueprintBuilderTool implements IPlugin {
     return steps;
   }
 
-  private buildRisks(r: ReasoningOutput) {
-    const risks = [
+  private buildRisks(r: ReasoningOutput): import('../../../types/blueprint').BlueprintRisk[] {
+    const risks: import('../../../types/blueprint').BlueprintRisk[] = [
       { level: 'medium' as const, title: 'API Rate Limiting',
         description: `External APIs may throttle requests under high load`,
         mitigation: 'Implement exponential backoff and per-service circuit breakers' },

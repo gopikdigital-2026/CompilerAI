@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, Copy, MessageSquare, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, Copy, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import type { WorkflowNode } from '../../types/workflow';
 import { NODE_TYPE_CONFIG, STATE_CONFIG } from '../../lib/workflowMocks';
 
@@ -12,8 +12,7 @@ interface NodePropertiesProps {
   onClose:     () => void;
 }
 
-const SECTION_LABELS = ['General', 'Config', 'Puertos', 'Métricas', 'Comentarios'] as const;
-type Section = typeof SECTION_LABELS[number];
+type Section = 'General' | 'Config' | 'Puertos' | 'Métricas' | 'Comentarios';
 
 export function NodeProperties({ node, onUpdate, onDelete, onDuplicate, onAddComment, onClose }: NodePropertiesProps) {
   const [openSections, setOpenSections] = useState<Set<Section>>(new Set(['General', 'Config', 'Métricas']));
@@ -24,7 +23,7 @@ export function NodeProperties({ node, onUpdate, onDelete, onDuplicate, onAddCom
   function toggle(s: Section) {
     setOpenSections(prev => {
       const next = new Set(prev);
-      next.has(s) ? next.delete(s) : next.add(s);
+      if (next.has(s)) { next.delete(s); } else { next.add(s); }
       return next;
     });
   }

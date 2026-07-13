@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Target, AlertTriangle, CheckCircle2, Info,
   Loader2,

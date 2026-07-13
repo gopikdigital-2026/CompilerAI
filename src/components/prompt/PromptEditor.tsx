@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-  Save, RotateCcw, Clock, Hash, Type,
-  ChevronDown, ChevronRight, History,
+  Save, Clock, Hash, Type,
+  History,
 } from 'lucide-react';
 import type { PromptVersion } from '../../types/prompt';
 

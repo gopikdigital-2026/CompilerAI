@@ -13,10 +13,8 @@ const STEP_CONFIG: Record<ReasoningStepType, { icon: React.ReactNode; label: str
   conclusion: { icon: <Flag size={13} />,            label: 'Conclusión',  color: 'text-error-400',   dot: 'bg-error-400' },
 };
 
-function StepRow({ step, index, total, isLast }: {
+function StepRow({ step, isLast }: {
   step: ReasoningStep;
-  index: number;
-  total: number;
   isLast: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -142,8 +140,6 @@ export function ReasoningEngine({ chain }: ReasoningEngineProps) {
           <StepRow
             key={step.id}
             step={step}
-            index={i}
-            total={chain.steps.length}
             isLast={i === chain.steps.length - 1}
           />
         ))}

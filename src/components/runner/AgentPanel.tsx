@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Cpu, Zap, DollarSign, Clock, Layers, Activity, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Bot, Cpu, Zap, DollarSign, Clock, Activity, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import type { ActiveAgentSnapshot } from '../../types/execution';
 
 interface AgentPanelProps {

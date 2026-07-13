@@ -1,5 +1,4 @@
-import React from 'react';
-import { Search, X, Loader2, Database, FileText, GitBranch } from 'lucide-react';
+import { Search, X, Loader2, Database } from 'lucide-react';
 import type { MemorySearchResult } from '../../types/memory';
 
 const TYPE_LABELS: Record<string, string> = {

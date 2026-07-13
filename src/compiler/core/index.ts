@@ -31,6 +31,6 @@ export { makeEvent } from './models/CompilerEvent';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 export type { ICompilerCore, ICompilerProvider, ReasoningOutput } from './interfaces/ICompilerCore';
-export type { IPipeline, PipelineContext, StageStatus, PipelineStageDefinition } from './interfaces/IPipeline';
+export type { IPipeline, PipelineContext, StageStatus } from './interfaces/IPipeline';
 export type { IPlugin, IPluginRegistry } from './interfaces/IPlugin';
 export type { IMemoryProvider, MemoryEntry } from './interfaces/IMemoryProvider';

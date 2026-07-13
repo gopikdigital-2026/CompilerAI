@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Star, Download, Sparkles, Bot, GitBranch, Plug } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -6,7 +6,7 @@ export function Marketplace() {
   const { t } = useTranslation();
   const mk = t.marketplace;
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState(mk.categories[0]);
+  const [category, setCategory] = useState<string>(mk.categories[0]);
 
   const MARKETPLACE_ITEMS = mk.items.map((item, i) => ({
     id: String(i + 1),
@@ -20,7 +20,7 @@ export function Marketplace() {
 
   // keep category keys in English for data matching; display translated label
   const EN_CATEGORIES = ['All', 'Workflows', 'Agents', 'Integrations'];
-  const activeEnCat = EN_CATEGORIES[mk.categories.indexOf(category)] ?? 'All';
+  const activeEnCat = EN_CATEGORIES[(mk.categories as unknown as string[]).indexOf(category)] ?? 'All';
 
   const filtered = MARKETPLACE_ITEMS.filter((item) => {
     const matchSearch = item.name.toLowerCase().includes(search.toLowerCase());

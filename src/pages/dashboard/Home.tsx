@@ -1,16 +1,17 @@
-import React from 'react';
 import { TrendingUp, TrendingDown, Bot, GitBranch, Activity, Zap, ArrowRight } from 'lucide-react';
 import { Sparkline } from '../../components/ui/Sparkline';
 import { BarChart } from '../../components/ui/BarChart';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { MOCK_AGENTS, MOCK_WORKFLOWS } from '../../lib/mockData';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useProfile } from '../../hooks/useProfile';
 import { useOrganization } from '../../hooks/useOrganization';
 import { useAuth } from '../../hooks/useAuth';
 
 export function HomeDashboard() {
   const { t } = useTranslation();
+  const { lang } = useLanguage();
   const h = t.home;
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -30,7 +31,7 @@ export function HomeDashboard() {
     value: [340, 480, 390, 620, 510, 280, 195][i],
   }));
 
-  const welcomeTitle = t.lang === 'es'
+  const welcomeTitle = lang === 'es'
     ? `Buenos días, ${displayName}`
     : `Good morning, ${displayName}`;
 
