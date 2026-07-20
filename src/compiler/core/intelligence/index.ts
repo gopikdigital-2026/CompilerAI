@@ -52,3 +52,21 @@ export type {
   IntentClassification, IntentResult, IntentStatus,
   IntentRule, CategoryScore, AreaRule, AreaScore, CapabilityMapping,
 } from './intent';
+
+// ── Planning Engine ────────────────────────────────────────────────────────────────
+export {
+  PlanningEngine, PlanGenerator, ExecutionGraphBuilder, PlanValidator, PlanRiskAnalyzer,
+  PLAN_NODE_TYPES, PLAN_STATUSES, RISK_LEVELS,
+  blueprintForIntent, deriveDependencyType, isConditional,
+  canParallelize, groupParallelNodes, evaluateApproval, classifyRisks, maxRiskLevel,
+  InvalidPlanError, CircularDependencyError, PlanningBlockedError,
+} from './planning';
+export type {
+  PlanningEngineDeps, IPlanningEngine, IPlanGenerator, IExecutionGraphBuilder,
+  IPlanValidator, IPlanRiskAnalyzer, PlanGenerationOutput,
+  ExecutionPlan, ExecutionGraph, PlanNode, PlanEdge, DependencyType, PlanNodeType,
+  PlanStatus, PlanRisk, RiskLevel, RiskKind, PlanInput, PlanOutput,
+  PlanValidationResult, PlanValidationError, PlanValidationWarning,
+  HumanApprovalRequirement, ApprovalReason,
+  NodeBlueprint, PlanBlueprint, ApprovalDecision,
+} from './planning';
