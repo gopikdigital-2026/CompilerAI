@@ -35,3 +35,20 @@ export type {
 export type {
   MissingInformation, InformationGapKind,
 } from './models/MissingInformation';
+
+// ── Intent Engine ────────────────────────────────────────────────────────────────
+export {
+  IntentEngine, IntentClassifier, IntentValidator,
+  INTENT_CATEGORIES, BUSINESS_AREAS, DECISION_LEVELS,
+  COMPLEXITY_LEVELS, IMPACT_LEVELS, REQUIRED_CAPABILITIES,
+  scoreCategories, detectContradictions, INTENT_RULES,
+  AREA_RULES, scoreAreas, mapCapabilities,
+} from './intent';
+export type {
+  IntentEngineDeps, IIntentClassifier, IIntentValidator, IIntentEngine,
+  IntentValidationOptions, IntentValidationOutcome,
+  IntentCategory, BusinessArea, DecisionLevel, ComplexityLevel, ImpactLevel,
+  RequiredCapability, SuggestedAgentType, SuggestedToolCategory,
+  IntentClassification, IntentResult, IntentStatus,
+  IntentRule, CategoryScore, AreaRule, AreaScore, CapabilityMapping,
+} from './intent';

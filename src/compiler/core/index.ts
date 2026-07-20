@@ -68,3 +68,22 @@ export type {
   MissingInformation,
   InformationGapKind,
 } from './intelligence';
+
+// ── Intent Engine ────────────────────────────────────────────────────────────────
+export {
+  IntentEngine,
+  IntentClassifier as IntentClassifierService,
+  IntentValidator as IntentValidatorService,
+  INTENT_CATEGORIES, BUSINESS_AREAS, DECISION_LEVELS,
+  COMPLEXITY_LEVELS, IMPACT_LEVELS, REQUIRED_CAPABILITIES,
+  scoreCategories, detectContradictions, INTENT_RULES,
+  AREA_RULES, scoreAreas, mapCapabilities,
+} from './intelligence';
+export type {
+  IntentEngineDeps, IIntentClassifier, IIntentValidator, IIntentEngine,
+  IntentValidationOptions, IntentValidationOutcome,
+  IntentCategory, BusinessArea, DecisionLevel, ComplexityLevel, ImpactLevel,
+  RequiredCapability, SuggestedAgentType, SuggestedToolCategory,
+  IntentClassification, IntentResult, IntentStatus,
+  IntentRule, CategoryScore, AreaRule, AreaScore, CapabilityMapping,
+} from './intelligence';
