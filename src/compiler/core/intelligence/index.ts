@@ -121,3 +121,15 @@ export type {
   ConfidenceLevel, ConfidenceStatus, ConfidenceValidationResult,
   EscalationInput, EscalationReason, BlockingInput, BlockingReason,
 } from './confidence';
+
+// ── Orchestrator ────────────────────────────────────────────────────────────────
+export {
+  CompilerIntelligenceOrchestrator,
+  PIPELINE_STAGES, COMPILER_INTELLIGENCE_STATUSES,
+  OrchestratorError, PipelineBlockedError, InvalidOrchestratorInputError,
+} from './orchestrator';
+export type {
+  ICompilerIntelligenceOrchestrator, CompilerIntelligenceOrchestratorDeps,
+  IntelligenceStage, CompilerIntelligenceStatus,
+  TraceEntry, CompilerIntelligenceResult, CompilerIntelligenceRequest,
+} from './orchestrator';

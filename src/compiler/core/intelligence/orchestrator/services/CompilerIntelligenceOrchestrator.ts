@@ -1,0 +1,268 @@
+// ─── Compiler Intelligence Orchestrator ─────────────────────────────────────────
+// Runs the full intelligence pipeline:
+//   ContextRequest → ContextResult → IntentResult → ExecutionPlan → DecisionResult → ConfidenceResult
+// Stops on blockers, propagates identifiers, records trace without sensitive data,
+// and supports resuming from a valid stage.
+
+import type { ContextResult } from '../../models/ContextResult';
+import type { IntentResult } from '../../intent/models/IntentResult';
+import type { ExecutionPlan } from '../../planning/models/ExecutionPlan';
+import type { DecisionResult } from '../../decision/models/DecisionResult';
+import type { ConfidenceResult } from '../../confidence/models/ConfidenceResult';
+import type { ConfidenceRequest } from '../../confidence/models/ConfidenceRequest';
+import type { DecisionRequest } from '../../decision/models/DecisionRequest';
+
+import { ContextIntelligenceService } from '../../ContextIntelligenceService';
+import { IntentEngine } from '../../intent/services/IntentEngine';
+import { PlanningEngine } from '../../planning/services/PlanningEngine';
+import { DecisionEngine } from '../../decision/services/DecisionEngine';
+import { ConfidenceEngine } from '../../confidence/services/ConfidenceEngine';
+import { DEFAULT_FACTOR_WEIGHTS } from '../../confidence/rules/ConfidenceRules';
+
+import type {
+  CompilerIntelligenceRequest,
+  CompilerIntelligenceResult,
+  CompilerIntelligenceStatus,
+  IntelligenceStage,
+  TraceEntry,
+} from '../models/CompilerIntelligenceModels';
+import type {
+  ICompilerIntelligenceOrchestrator,
+  CompilerIntelligenceOrchestratorDeps,
+} from '../interfaces/ICompilerIntelligenceOrchestrator';
+import { InvalidOrchestratorInputError } from '../errors/OrchestratorErrors';
+
+const VERSION = '1.0.0';
+
+const STAGE_ORDER: readonly IntelligenceStage[] = [
+  'CONTEXT', 'INTENT', 'PLANNING', 'DECISION', 'CONFIDENCE',
+];
+
+export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOrchestrator {
+  private readonly contextService: ContextIntelligenceService;
+  private readonly intentEngine: IntentEngine;
+  private readonly planningEngine: PlanningEngine;
+  private readonly decisionEngine: DecisionEngine;
+  private readonly confidenceEngine: ConfidenceEngine;
+
+  constructor(private readonly deps: CompilerIntelligenceOrchestratorDeps) {
+    this.contextService = new ContextIntelligenceService();
+    this.intentEngine = new IntentEngine();
+    this.planningEngine = new PlanningEngine();
+    this.decisionEngine = new DecisionEngine();
+    this.confidenceEngine = new ConfidenceEngine({
+      idGenerator: deps.idGenerator,
+      clock: deps.clock,
+      factorWeights: deps.factorWeights,
+    });
+  }
+
+  async execute(request: CompilerIntelligenceRequest): Promise<CompilerIntelligenceResult> {
+    const executionId = this.deps.idGenerator();
+    const startedAt = this.deps.clock();
+    const trace: TraceEntry[] = [];
+    const warnings: string[] = [];
+    const errors: string[] = [];
+    const blockers: string[] = [];
+
+    if (!request.contextRequest?.requestId) {
+      throw new InvalidOrchestratorInputError('ContextRequest with requestId is required.', executionId);
+    }
+    if (!request.memory?.organizationId) {
+      throw new InvalidOrchestratorInputError('EnterpriseMemorySnapshot with organizationId is required.', executionId);
+    }
+
+    const resumeFrom = request.resumeFrom ?? 'CONTEXT';
+    const resumeIdx = STAGE_ORDER.indexOf(resumeFrom);
+    if (resumeIdx < 0) {
+      throw new InvalidOrchestratorInputError(`Invalid resume stage: ${resumeFrom}`, executionId);
+    }
+
+    let contextResult: ContextResult | null = request.existingResults?.contextResult ?? null;
+    let intentResult: IntentResult | null = request.existingResults?.intentResult ?? null;
+    let executionPlan: ExecutionPlan | null = request.existingResults?.executionPlan ?? null;
+    let decisionResult: DecisionResult | null = request.existingResults?.decisionResult ?? null;
+    let confidenceResult: ConfidenceResult | null = null;
+
+    let currentStage: IntelligenceStage = resumeFrom;
+    let status: CompilerIntelligenceStatus = 'COMPLETED';
+    let requiresHumanReview = false;
+
+    try {
+      // ── Stage 1: Context ──────────────────────────────────────────────────────
+      if (resumeIdx <= 0) {
+        currentStage = 'CONTEXT';
+        const stageStart = this.deps.clock();
+        try {
+          contextResult = await this.contextService.analyze(request.contextRequest, request.memory);
+          trace.push(this.makeTrace('CONTEXT', stageStart, true,
+            `Context analyzed: status=${contextResult.status}, sufficiency=${contextResult.sufficiencyScore}.`,
+            undefined, contextResult.requestId));
+        } catch (err) {
+          trace.push(this.makeTrace('CONTEXT', stageStart, false, this.safeMessage(err)));
+          errors.push(this.safeMessage(err));
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (contextResult.status === 'BLOCKED') {
+          blockers.push('Context analysis returned BLOCKED status.');
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (contextResult.status === 'NEEDS_DATA') warnings.push('Context requires additional data.');
+        if (contextResult.status === 'NEEDS_CLARIFICATION') warnings.push('Context requires clarification.');
+      }
+
+      // ── Stage 2: Intent ───────────────────────────────────────────────────────
+      if (resumeIdx <= 1) {
+        currentStage = 'INTENT';
+        if (!contextResult) throw new InvalidOrchestratorInputError('Cannot run intent stage without contextResult.', executionId);
+        const stageStart = this.deps.clock();
+        try {
+          intentResult = await this.intentEngine.resolve(contextResult, undefined, request.contextRequest);
+          trace.push(this.makeTrace('INTENT', stageStart, true,
+            `Intent resolved: primary=${intentResult.primaryIntent}, status=${intentResult.status}.`,
+            this.intentEngine.id, intentResult.intentId));
+        } catch (err) {
+          trace.push(this.makeTrace('INTENT', stageStart, false, this.safeMessage(err)));
+          errors.push(this.safeMessage(err));
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (intentResult.status === 'BLOCKED') {
+          blockers.push('Intent engine returned BLOCKED status.');
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (intentResult.requiresHumanApproval) requiresHumanReview = true;
+        if (intentResult.requiresClarification) warnings.push('Intent requires clarification.');
+      }
+
+      // ── Stage 3: Planning ──────────────────────────────────────────────────────
+      if (resumeIdx <= 2) {
+        currentStage = 'PLANNING';
+        if (!intentResult) throw new InvalidOrchestratorInputError('Cannot run planning stage without intentResult.', executionId);
+        const stageStart = this.deps.clock();
+        try {
+          executionPlan = await this.planningEngine.plan(intentResult, {
+            idGenerator: this.deps.idGenerator, clock: this.deps.clock,
+          });
+          trace.push(this.makeTrace('PLANNING', stageStart, true,
+            `Plan generated: status=${executionPlan.status}, nodes=${executionPlan.graph.nodes.length}.`,
+            this.planningEngine.id, executionPlan.planId));
+        } catch (err) {
+          trace.push(this.makeTrace('PLANNING', stageStart, false, this.safeMessage(err)));
+          errors.push(this.safeMessage(err));
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (executionPlan.status === 'BLOCKED' || executionPlan.status === 'INVALID') {
+          blockers.push(`Plan status is ${executionPlan.status}.`);
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (executionPlan.status === 'NEEDS_DATA') warnings.push('Plan requires additional data.');
+        if (executionPlan.status === 'NEEDS_CLARIFICATION') warnings.push('Plan requires clarification.');
+        if (executionPlan.humanApprovalRequirements.length > 0) requiresHumanReview = true;
+      }
+
+      // ── Stage 4: Decision ─────────────────────────────────────────────────────
+      if (resumeIdx <= 3) {
+        currentStage = 'DECISION';
+        if (!executionPlan) throw new InvalidOrchestratorInputError('Cannot run decision stage without executionPlan.', executionId);
+        const stageStart = this.deps.clock();
+        try {
+          const decisionReq: DecisionRequest = {
+            executionPlan, evaluationPreferences: {}, riskTolerance: request.riskTolerance,
+            availableConstraints: [], requestedDecisionScope: 'FULL', requestedAt: this.deps.clock(),
+          };
+          decisionResult = await this.decisionEngine.decide(decisionReq, {
+            idGenerator: this.deps.idGenerator, clock: this.deps.clock,
+          });
+          trace.push(this.makeTrace('DECISION', stageStart, true,
+            `Decision made: status=${decisionResult.status}, decisions=${decisionResult.decisions.length}.`,
+            this.decisionEngine.id, decisionResult.decisionResultId));
+        } catch (err) {
+          trace.push(this.makeTrace('DECISION', stageStart, false, this.safeMessage(err)));
+          errors.push(this.safeMessage(err));
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (decisionResult.status === 'BLOCKED' || decisionResult.status === 'INVALID') {
+          blockers.push(`Decision status is ${decisionResult.status}.`);
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (decisionResult.status === 'NEEDS_DATA') warnings.push('Decision requires additional data.');
+        if (decisionResult.status === 'NEEDS_CLARIFICATION') warnings.push('Decision requires clarification.');
+        if (decisionResult.status === 'REQUIRES_APPROVAL' || decisionResult.requiresReplanning) requiresHumanReview = true;
+      }
+
+      // ── Stage 5: Confidence ───────────────────────────────────────────────────
+      if (resumeIdx <= 4) {
+        currentStage = 'CONFIDENCE';
+        const stageStart = this.deps.clock();
+        try {
+          const confReq: ConfidenceRequest = {
+            requestId: request.contextRequest.requestId,
+            organizationId: request.contextRequest.organizationId,
+            contextResult: contextResult ?? undefined,
+            intentResult: intentResult ?? undefined,
+            executionPlan: executionPlan ?? undefined,
+            decisionResult: decisionResult ?? undefined,
+            assessmentScope: 'FULL_PIPELINE',
+            minimumConfidenceThreshold: request.minimumConfidenceThreshold,
+            riskTolerance: request.riskTolerance,
+            requestedAt: this.deps.clock(),
+          };
+          confidenceResult = this.confidenceEngine.evaluate(confReq);
+          trace.push(this.makeTrace('CONFIDENCE', stageStart, true,
+            `Confidence evaluated: score=${confidenceResult.overallScore}, status=${confidenceResult.status}.`,
+            undefined, confidenceResult.confidenceResultId));
+        } catch (err) {
+          trace.push(this.makeTrace('CONFIDENCE', stageStart, false, this.safeMessage(err)));
+          errors.push(this.safeMessage(err));
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (confidenceResult.blocked) {
+          blockers.push(...confidenceResult.recommendedActions);
+          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+        }
+        if (confidenceResult.requiresHumanReview) requiresHumanReview = true;
+        if (confidenceResult.status === 'NEEDS_DATA') status = 'NEEDS_DATA';
+        else if (confidenceResult.status === 'NEEDS_CLARIFICATION') status = 'NEEDS_CLARIFICATION';
+        else if (confidenceResult.status === 'HUMAN_REVIEW_REQUIRED') status = 'REQUIRES_APPROVAL';
+        else if (confidenceResult.status === 'INVALID') { status = 'FAILED'; errors.push('Confidence evaluation returned INVALID.'); }
+      }
+
+      if (status === 'COMPLETED' && requiresHumanReview) status = 'REQUIRES_APPROVAL';
+
+      return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+
+    } catch (err) {
+      if (err instanceof InvalidOrchestratorInputError) throw err;
+      errors.push(this.safeMessage(err));
+      return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+    }
+  }
+
+  private makeTrace(stage: IntelligenceStage, startedAt: string, success: boolean, summary: string, engineId?: string, resultId?: string): TraceEntry {
+    return { stage, startedAt, completedAt: this.deps.clock(), success, summary, engineId, resultId };
+  }
+
+  private safeMessage(err: unknown): string {
+    if (err instanceof Error) return `Stage failed: ${err.name}`;
+    return 'Stage failed: unknown error';
+  }
+
+  private build(
+    executionId: string, request: CompilerIntelligenceRequest,
+    contextResult: ContextResult | null, intentResult: IntentResult | null,
+    executionPlan: ExecutionPlan | null, decisionResult: DecisionResult | null,
+    confidenceResult: ConfidenceResult | null, currentStage: IntelligenceStage,
+    status: CompilerIntelligenceStatus, trace: TraceEntry[], warnings: string[],
+    errors: string[], blockers: string[], requiresHumanReview: boolean, startedAt: string,
+  ): CompilerIntelligenceResult {
+    return {
+      executionId, requestId: request.contextRequest.requestId,
+      organizationId: request.contextRequest.organizationId,
+      contextResult, intentResult, executionPlan, decisionResult, confidenceResult,
+      currentStage, status, trace, warnings, errors, blockers, requiresHumanReview,
+      startedAt, completedAt: this.deps.clock(), version: VERSION,
+    };
+  }
+}
+
+export { DEFAULT_FACTOR_WEIGHTS };
