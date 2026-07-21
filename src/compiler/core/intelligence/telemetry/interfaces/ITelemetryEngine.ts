@@ -1,60 +1,72 @@
 // ─── ITelemetryEngine ───────────────────────────────────────────────────────────
-// Interface for the telemetry engine that records execution traces.
+// Interface for the telemetry engine that records execution traces and emits events.
 
 import type { ExecutionTrace } from '../models/ExecutionTrace';
 import type { TelemetryMetrics } from '../models/TelemetryMetrics';
 import type { ExplainabilityRecord } from '../models/ExplainabilityRecord';
-import type { TelemetryEventPayload } from '../models/TelemetryEventPayload';
-import type { IntelligenceStage } from '../../orchestrator/models/CompilerIntelligenceModels';
+import type { PerformanceSnapshot } from '../models/PerformanceSnapshot';
+import type { TelemetryEvent } from '../events/TelemetryEvent';
+import type { IntelligenceStage, CompilerIntelligenceStatus } from '../../orchestrator/models/CompilerIntelligenceModels';
+import type { ContextResult } from '../../models/ContextResult';
+import type { IntentResult } from '../../intent/models/IntentResult';
+import type { ExecutionPlan } from '../../planning/models/ExecutionPlan';
+import type { DecisionResult } from '../../decision/models/DecisionResult';
+import type { ConfidenceResult } from '../../confidence/models/ConfidenceResult';
 
 export interface TelemetryEngineDeps {
   idGenerator: () => string;
   clock:       () => string;
 }
 
+/** Data passed when a stage completes. */
+export interface StageCompleteData {
+  resultId?:          string;
+  summary:            string;
+  warnings?:          string[];
+  errors?:            string[];
+  confidenceScore?:   number;
+  riskLevel?:         string;
+  estimatedCost?:     number;
+  tokensUsed?:        number;
+  memoryUsageMb?:     number;
+  modelUsed?:         string;
+  decisionsEvaluated?: number;
+}
+
+/** Data passed when a pipeline-level event occurs. */
+export interface PipelineEventData {
+  stage?:            IntelligenceStage;
+  summary:           string;
+  confidenceScore?:  number;
+  riskLevel?:        string;
+  blockers?:         string[];
+  warnings?:         string[];
+  errors?:           string[];
+  reason?:           string;
+  rejectedDecisionIds?: string[];
+}
+
+/** Pipeline results supplied at finalization for explainability. */
+export interface PipelineResults {
+  contextResult?:    ContextResult | null;
+  intentResult?:     IntentResult | null;
+  executionPlan?:    ExecutionPlan | null;
+  decisionResult?:   DecisionResult | null;
+  confidenceResult?: ConfidenceResult | null;
+}
+
 export interface ITelemetryEngine {
   readonly id: string;
-  /** Start tracking a new pipeline execution. */
   startExecution(executionId: string, requestId: string, organizationId: string): void;
-  /** Record a stage start. */
   recordStageStart(stage: IntelligenceStage, engineId?: string): void;
-  /** Record a stage completion. */
   recordStageComplete(stage: IntelligenceStage, data: StageCompleteData): void;
-  /** Record a stage failure. */
   recordStageFailure(stage: IntelligenceStage, errors: string[]): void;
-  /** Record a pipeline-level event (blocked, human review, etc.). */
   recordPipelineEvent(eventType: 'PipelineBlocked' | 'HumanReviewRequested' | 'ConfidenceCalculated' | 'DecisionRejected', data: PipelineEventData): void;
-  /** Finalize the execution and return the full trace. */
-  finalizeExecution(pipelineStatus: import('../../orchestrator/models/CompilerIntelligenceModels').CompilerIntelligenceStatus, requiresHumanReview: boolean): ExecutionTrace;
-  /** Get the current in-progress trace. */
+  finalizeExecution(pipelineStatus: CompilerIntelligenceStatus, requiresHumanReview: boolean, results?: PipelineResults): ExecutionTrace;
   getCurrentTrace(): ExecutionTrace | null;
-  /** Get all finalized traces. */
   getTraces(): ExecutionTrace[];
-  /** Compute aggregate metrics across all traces. */
   computeMetrics(): TelemetryMetrics;
-  /** Build an explainability record from a trace. */
-  explain(trace: ExecutionTrace): ExplainabilityRecord;
-  /** Get all emitted events. */
-  getEvents(): TelemetryEventPayload[];
-}
-
-export interface StageCompleteData {
-  resultId?:       string;
-  summary:         string;
-  warnings?:       string[];
-  errors?:         string[];
-  confidenceScore?: number;
-  riskLevel?:      string;
-  estimatedCost?:  number;
-  tokensUsed?:     number;
-}
-
-export interface PipelineEventData {
-  stage?:          IntelligenceStage;
-  summary:         string;
-  confidenceScore?: number;
-  riskLevel?:      string;
-  blockers?:       string[];
-  warnings?:       string[];
-  errors?:         string[];
+  explain(trace?: ExecutionTrace, results?: PipelineResults): ExplainabilityRecord;
+  getEvents(): TelemetryEvent[];
+  getPerformanceSnapshots(): PerformanceSnapshot[];
 }

@@ -1,4 +1,5 @@
-// ─── Telemetry errors ───────────────────────────────────────────────────────────
+// ─── Telemetry error ───────────────────────────────────────────────────────────
+// Base error for all telemetry subsystem failures.
 
 export class TelemetryError extends Error {
   constructor(message: string) {
@@ -18,5 +19,12 @@ export class InvalidTelemetryEventError extends TelemetryError {
   constructor(message: string) {
     super(message);
     this.name = 'InvalidTelemetryEventError';
+  }
+}
+
+export class TraceRepositoryError extends TelemetryError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TraceRepositoryError';
   }
 }

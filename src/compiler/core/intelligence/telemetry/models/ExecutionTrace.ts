@@ -5,23 +5,24 @@ import type { IntelligenceStage, CompilerIntelligenceStatus } from '../../orches
 import type { StageTrace } from './StageTrace';
 
 export interface ExecutionTrace {
-  traceId:          string;
-  executionId:      string;
-  requestId:        string;
-  organizationId:   string;
-  pipelineStatus:   CompilerIntelligenceStatus;
-  startedAt:        string;   // ISO
-  completedAt:       string | null;  // ISO
-  totalDurationMs:  number | null;
-  stages:           StageTrace[];
-  totalWarnings:    number;
-  totalErrors:      number;
-  totalBlockers:    number;
-  finalConfidence:  number | null;  // 0–100
-  finalRiskLevel:   string | null;
-  estimatedTotalCost: number | null;
-  totalTokensUsed:  number | null;
-  requiresHumanReview: boolean;
-  currentStage:     IntelligenceStage;
-  version:          string;
+  traceId:              string;
+  executionId:          string;
+  requestId:            string;
+  organizationId:       string;
+  pipelineStatus:       CompilerIntelligenceStatus;
+  startedAt:            string;   // ISO
+  completedAt:           string | null;  // ISO
+  totalDurationMs:      number | null;
+  stages:               StageTrace[];
+  totalWarnings:        number;
+  totalErrors:          number;
+  totalBlockers:        number;
+  finalConfidence:      number | null;  // 0–100
+  finalRiskLevel:       string | null;
+  estimatedTotalCost:   number | null;
+  totalTokensUsed:      number | null;
+  totalDecisionsEvaluated: number | null;
+  requiresHumanReview:  boolean;
+  currentStage:         IntelligenceStage;
+  version:              string;
 }

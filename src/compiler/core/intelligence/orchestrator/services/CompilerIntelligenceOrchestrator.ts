@@ -31,7 +31,7 @@ import type {
   CompilerIntelligenceOrchestratorDeps,
 } from '../interfaces/ICompilerIntelligenceOrchestrator';
 import { InvalidOrchestratorInputError } from '../errors/OrchestratorErrors';
-import type { ITelemetryEngine, StageCompleteData } from '../../telemetry/interfaces/ITelemetryEngine';
+import type { ITelemetryEngine, StageCompleteData, PipelineResults } from '../../telemetry/interfaces/ITelemetryEngine';
 
 const VERSION = '1.0.0';
 
@@ -295,7 +295,10 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
     status: CompilerIntelligenceStatus, trace: TraceEntry[], warnings: string[],
     errors: string[], blockers: string[], requiresHumanReview: boolean, startedAt: string,
   ): CompilerIntelligenceResult {
-    if (this.telemetry) this.telemetry.finalizeExecution(status, requiresHumanReview);
+    if (this.telemetry) {
+      const results: PipelineResults = { contextResult, intentResult, executionPlan, decisionResult, confidenceResult };
+      this.telemetry.finalizeExecution(status, requiresHumanReview, results);
+    }
     return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
   }
 

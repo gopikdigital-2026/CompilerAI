@@ -171,16 +171,21 @@ export type {
 
 // ── Telemetry Engine ───────────────────────────────────────────────────────────────
 export {
-  TelemetryEngine, TelemetryEventBus,
-  TELEMETRY_EVENT_TYPES, buildTelemetryEvent,
-  buildExplainabilityFromTrace, buildStageExplanations,
-  TelemetryError, TelemetryNotInitializedError, InvalidTelemetryEventError,
+  TelemetryEngine, TelemetryEventBus, MetricsCollector, TraceBuilder, ExplainabilityBuilder,
+  TELEMETRY_EVENT_TYPES,
+  TelemetryError, TelemetryNotInitializedError, InvalidTelemetryEventError, TraceRepositoryError,
 } from './intelligence';
 export type {
   ITelemetryEngine, TelemetryEngineDeps,
   ITelemetryEventBus, TelemetryEventHandler,
+  IExecutionTraceRepository, IMetricsCollector,
   TelemetryEventType, TelemetryStageStatus,
   StageTrace, ExecutionTrace, TelemetryMetrics, StageMetric,
-  ExplainabilityRecord, StageExplanation, TelemetryEventPayload,
-  StageCompleteData, PipelineEventData,
+  ExplainabilityRecord, DecisionSummary, AlternativeSummary,
+  PerformanceSnapshot, TelemetryContext,
+  StageCompleteData, PipelineEventData, PipelineResults,
+  TelemetryEvent,
+  StageStartedEvent, StageCompletedEvent, StageFailedEvent,
+  PipelineBlockedEvent, HumanReviewRequestedEvent,
+  ConfidenceCalculatedEvent, DecisionRejectedEvent,
 } from './intelligence';
