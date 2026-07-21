@@ -105,3 +105,24 @@ export type {
   HumanApprovalRequirement, ApprovalReason,
   NodeBlueprint, PlanBlueprint, ApprovalDecision,
 } from './intelligence';
+
+// ── Decision Engine ────────────────────────────────────────────────────────────────
+export {
+  DecisionEngine, DecisionExtractor, AlternativeGenerator, AlternativeEvaluator,
+  ConflictDetector, DecisionValidator,
+  DECISION_STATUSES, DECISION_TYPES, CRITERION_KINDS,
+  nodeTypeToDecisionType, isDecisionNode, shouldExtractFromRisk,
+  resolveConfig, evaluateAlternative, rankEvaluations,
+  evaluateDecisionApproval, detectConflicts, evaluateReplanning,
+  InvalidDecisionInputError, DecisionBlockedError, NoViableAlternativeError,
+} from './intelligence';
+export type {
+  DecisionEngineDeps, IDecisionEngine, IDecisionExtractor, IAlternativeGenerator,
+  IAlternativeEvaluator, IConflictDetector, IDecisionValidator,
+  DecisionRequest, EvaluationPreferences, DecisionScope,
+  DecisionResult, SelectedStrategy, DecisionItem, DecisionAlternative,
+  AlternativeEvaluation, DecisionCriterion, CriterionKind,
+  DecisionStatus, DecisionType, DecisionConflict, ConflictType, DecisionRationale,
+  DecisionValidationResult, DecisionValidationError, DecisionValidationWarning,
+  EvaluationConfig, DecisionApprovalDecision, ReplanningDecision,
+} from './intelligence';
