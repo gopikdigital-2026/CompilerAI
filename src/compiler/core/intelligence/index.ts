@@ -91,3 +91,33 @@ export type {
   DecisionValidationResult, DecisionValidationError, DecisionValidationWarning,
   EvaluationConfig, DecisionApprovalDecision, ReplanningDecision,
 } from './decision';
+
+// ── Confidence Engine ────────────────────────────────────────────────────────────
+export {
+  ConfidenceEngine, ConfidenceCalculator, UncertaintyAnalyzer,
+  EvidenceEvaluator, ConfidenceValidator,
+  CONFIDENCE_LEVELS, CONFIDENCE_STATUSES,
+  DEFAULT_FACTOR_WEIGHTS, clampScore, levelFromScore, normalizeWeights, makeFactor,
+  scoreContextCompleteness, scoreContextStatus,
+  scoreIntentClarity, scoreIntentStatus,
+  scoreGraphValidity, scoreUnresolvedRisks, scoreExternalDependency, scoreAssumptionCount,
+  scoreAlternativeGap, scoreConflictSeverity, scoreReversibility, scorePendingApproval,
+  scoreCrossEngineConsistency, aggregateAssessments,
+  detectContextUncertainties, detectIntentUncertainties,
+  detectPlanUncertainties, detectDecisionUncertainties, detectMissingDataUncertainties,
+  collectContextEvidence, collectIntentEvidence,
+  collectPlanEvidence, collectDecisionEvidence, detectMissingEvidence,
+  evaluateHumanEscalation, shouldEscalate,
+  evaluateBlocking, shouldBlock,
+} from './confidence';
+export type {
+  ConfidenceEngineDeps, IConfidenceEngine, IConfidenceCalculator, IUncertaintyAnalyzer,
+  IEvidenceEvaluator, IConfidenceValidator,
+  ConfidenceRequest, AssessmentScope,
+  ConfidenceResult, ConfidenceAssessment, AssessedSourceType,
+  ConfidenceFactor, FactorKind, FactorDirection,
+  UncertaintyItem, UncertaintyType,
+  EvidenceItem, EvidenceKind,
+  ConfidenceLevel, ConfidenceStatus, ConfidenceValidationResult,
+  EscalationInput, EscalationReason, BlockingInput, BlockingReason,
+} from './confidence';
