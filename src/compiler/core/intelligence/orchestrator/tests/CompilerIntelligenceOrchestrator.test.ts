@@ -70,7 +70,6 @@ function mkRequest(overrides: Partial<CompilerIntelligenceRequest> = {}): Compil
 
 async function run(): Promise<void> {
 
-  // 1 — Successful full pipeline → COMPLETED
   test('1. full pipeline success → COMPLETED', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
     const r = await orchestrator.execute(mkRequest());
@@ -90,10 +89,8 @@ async function run(): Promise<void> {
     assert.ok(r.completedAt.length > 0);
   });
 
-  // 2 — Blocked pipeline → BLOCKED
   test('2. blocked pipeline → BLOCKED', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
-    // Use a prompt that triggers workforce reduction → should block or require approval
     const r = await orchestrator.execute(mkRequest({
       contextRequest: mkContextRequest({
         prompt: 'Reduce inmediatamente el 20 % de la plantilla.',
@@ -105,7 +102,6 @@ async function run(): Promise<void> {
       'should require human review or have blockers');
   });
 
-  // 3 — Insufficient data → NEEDS_DATA
   test('3. insufficient data → NEEDS_DATA', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
     const r = await orchestrator.execute(mkRequest({
@@ -119,7 +115,6 @@ async function run(): Promise<void> {
       `expected NEEDS_DATA or similar, got ${r.status}`);
   });
 
-  // 4 — Human review required → REQUIRES_APPROVAL
   test('4. human review → REQUIRES_APPROVAL', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
     const r = await orchestrator.execute(mkRequest({
@@ -132,7 +127,6 @@ async function run(): Promise<void> {
       `expected human review, got ${r.status}`);
   });
 
-  // 5 — Controlled error → FAILED
   test('5. invalid input → controlled error', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
     await assert.rejects(
@@ -143,7 +137,6 @@ async function run(): Promise<void> {
     );
   });
 
-  // 6 — Deterministic output
   test('6. deterministic output → same status and scores', async () => {
     const req = mkRequest();
     const orchestrator1 = new CompilerIntelligenceOrchestrator(makeDeps());
@@ -157,7 +150,6 @@ async function run(): Promise<void> {
     }
   });
 
-  // 7 — Trace contains stage info
   test('7. trace contains stage info', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
     const r = await orchestrator.execute(mkRequest());
@@ -175,14 +167,11 @@ async function run(): Promise<void> {
     }
   });
 
-  // 8 — Resume from planning stage
   test('8. resume from PLANNING → skips context and intent', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
-    // First run to get context and intent results
     const fullRun = await orchestrator.execute(mkRequest());
     assert.ok(fullRun.contextResult !== null);
     assert.ok(fullRun.intentResult !== null);
-    // Resume from planning with pre-existing results
     const r = await orchestrator.execute(mkRequest({
       resumeFrom: 'PLANNING',
       existingResults: {
@@ -197,7 +186,6 @@ async function run(): Promise<void> {
     assert.ok(r.executionPlan !== null, 'should have execution plan');
   });
 
-  // 9 — Empty memory → still produces a result
   test('9. empty memory → produces result with warnings', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
     const r = await orchestrator.execute(mkRequest({
@@ -207,7 +195,6 @@ async function run(): Promise<void> {
       'should produce a result even with empty memory');
   });
 
-  // 10 — Propagates organizationId
   test('10. propagates organizationId', async () => {
     const orchestrator = new CompilerIntelligenceOrchestrator(makeDeps());
     const r = await orchestrator.execute(mkRequest({
