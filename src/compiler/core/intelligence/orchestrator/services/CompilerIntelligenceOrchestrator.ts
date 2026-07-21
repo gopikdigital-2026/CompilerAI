@@ -31,6 +31,7 @@ import type {
   CompilerIntelligenceOrchestratorDeps,
 } from '../interfaces/ICompilerIntelligenceOrchestrator';
 import { InvalidOrchestratorInputError } from '../errors/OrchestratorErrors';
+import type { ITelemetryEngine, StageCompleteData } from '../../telemetry/interfaces/ITelemetryEngine';
 
 const VERSION = '1.0.0';
 
@@ -44,6 +45,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
   private readonly planningEngine: PlanningEngine;
   private readonly decisionEngine: DecisionEngine;
   private readonly confidenceEngine: ConfidenceEngine;
+  private readonly telemetry: ITelemetryEngine | null;
 
   constructor(private readonly deps: CompilerIntelligenceOrchestratorDeps) {
     this.contextService = new ContextIntelligenceService();
@@ -51,10 +53,9 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
     this.planningEngine = new PlanningEngine();
     this.decisionEngine = new DecisionEngine();
     this.confidenceEngine = new ConfidenceEngine({
-      idGenerator: deps.idGenerator,
-      clock: deps.clock,
-      factorWeights: deps.factorWeights,
+      idGenerator: deps.idGenerator, clock: deps.clock, factorWeights: deps.factorWeights,
     });
+    this.telemetry = deps.telemetry ?? null;
   }
 
   async execute(request: CompilerIntelligenceRequest): Promise<CompilerIntelligenceResult> {
@@ -89,23 +90,30 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
     let requiresHumanReview = false;
 
     try {
+      if (this.telemetry) this.telemetry.startExecution(executionId, request.contextRequest.requestId, request.contextRequest.organizationId);
+
       // ── Stage 1: Context ──────────────────────────────────────────────────────
       if (resumeIdx <= 0) {
         currentStage = 'CONTEXT';
         const stageStart = this.deps.clock();
+        if (this.telemetry) this.telemetry.recordStageStart('CONTEXT');
         try {
           contextResult = await this.contextService.analyze(request.contextRequest, request.memory);
+          const ctxData: StageCompleteData = { summary: `Context: status=${contextResult.status}, sufficiency=${contextResult.sufficiencyScore}.`, resultId: contextResult.requestId };
+          if (this.telemetry) this.telemetry.recordStageComplete('CONTEXT', ctxData);
           trace.push(this.makeTrace('CONTEXT', stageStart, true,
             `Context analyzed: status=${contextResult.status}, sufficiency=${contextResult.sufficiencyScore}.`,
             undefined, contextResult.requestId));
         } catch (err) {
+          if (this.telemetry) this.telemetry.recordStageFailure('CONTEXT', [this.safeMessage(err)]);
           trace.push(this.makeTrace('CONTEXT', stageStart, false, this.safeMessage(err)));
           errors.push(this.safeMessage(err));
           return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (contextResult.status === 'BLOCKED') {
           blockers.push('Context analysis returned BLOCKED status.');
-          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+          if (this.telemetry) this.telemetry.recordPipelineEvent('PipelineBlocked', { stage: 'CONTEXT', summary: 'Context analysis returned BLOCKED.', blockers });
+          return this.finalize(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (contextResult.status === 'NEEDS_DATA') warnings.push('Context requires additional data.');
         if (contextResult.status === 'NEEDS_CLARIFICATION') warnings.push('Context requires clarification.');
@@ -116,21 +124,26 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
         currentStage = 'INTENT';
         if (!contextResult) throw new InvalidOrchestratorInputError('Cannot run intent stage without contextResult.', executionId);
         const stageStart = this.deps.clock();
+        if (this.telemetry) this.telemetry.recordStageStart('INTENT', this.intentEngine.id);
         try {
           intentResult = await this.intentEngine.resolve(contextResult, undefined, request.contextRequest);
+          const intentData: StageCompleteData = { summary: `Intent: primary=${intentResult.primaryIntent}, status=${intentResult.status}.`, resultId: intentResult.intentId };
+          if (this.telemetry) this.telemetry.recordStageComplete('INTENT', intentData);
           trace.push(this.makeTrace('INTENT', stageStart, true,
             `Intent resolved: primary=${intentResult.primaryIntent}, status=${intentResult.status}.`,
             this.intentEngine.id, intentResult.intentId));
         } catch (err) {
+          if (this.telemetry) this.telemetry.recordStageFailure('INTENT', [this.safeMessage(err)]);
           trace.push(this.makeTrace('INTENT', stageStart, false, this.safeMessage(err)));
           errors.push(this.safeMessage(err));
           return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (intentResult.status === 'BLOCKED') {
           blockers.push('Intent engine returned BLOCKED status.');
-          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+          if (this.telemetry) this.telemetry.recordPipelineEvent('PipelineBlocked', { stage: 'INTENT', summary: 'Intent engine returned BLOCKED.', blockers });
+          return this.finalize(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
-        if (intentResult.requiresHumanApproval) requiresHumanReview = true;
+        if (intentResult.requiresHumanApproval) { requiresHumanReview = true; if (this.telemetry) this.telemetry.recordPipelineEvent('HumanReviewRequested', { stage: 'INTENT', summary: 'Intent requires human approval.' }); }
         if (intentResult.requiresClarification) warnings.push('Intent requires clarification.');
       }
 
@@ -139,21 +152,26 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
         currentStage = 'PLANNING';
         if (!intentResult) throw new InvalidOrchestratorInputError('Cannot run planning stage without intentResult.', executionId);
         const stageStart = this.deps.clock();
+        if (this.telemetry) this.telemetry.recordStageStart('PLANNING', this.planningEngine.id);
         try {
           executionPlan = await this.planningEngine.plan(intentResult, {
             idGenerator: this.deps.idGenerator, clock: this.deps.clock,
           });
+          const planData: StageCompleteData = { summary: `Plan: status=${executionPlan.status}, nodes=${executionPlan.graph.nodes.length}.`, resultId: executionPlan.planId, riskLevel: this.maxRisk(executionPlan) };
+          if (this.telemetry) this.telemetry.recordStageComplete('PLANNING', planData);
           trace.push(this.makeTrace('PLANNING', stageStart, true,
             `Plan generated: status=${executionPlan.status}, nodes=${executionPlan.graph.nodes.length}.`,
             this.planningEngine.id, executionPlan.planId));
         } catch (err) {
+          if (this.telemetry) this.telemetry.recordStageFailure('PLANNING', [this.safeMessage(err)]);
           trace.push(this.makeTrace('PLANNING', stageStart, false, this.safeMessage(err)));
           errors.push(this.safeMessage(err));
           return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (executionPlan.status === 'BLOCKED' || executionPlan.status === 'INVALID') {
           blockers.push(`Plan status is ${executionPlan.status}.`);
-          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+          if (this.telemetry) this.telemetry.recordPipelineEvent('PipelineBlocked', { stage: 'PLANNING', summary: `Plan status is ${executionPlan.status}.`, blockers });
+          return this.finalize(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (executionPlan.status === 'NEEDS_DATA') warnings.push('Plan requires additional data.');
         if (executionPlan.status === 'NEEDS_CLARIFICATION') warnings.push('Plan requires clarification.');
@@ -165,6 +183,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
         currentStage = 'DECISION';
         if (!executionPlan) throw new InvalidOrchestratorInputError('Cannot run decision stage without executionPlan.', executionId);
         const stageStart = this.deps.clock();
+        if (this.telemetry) this.telemetry.recordStageStart('DECISION', this.decisionEngine.id);
         try {
           const decisionReq: DecisionRequest = {
             executionPlan, evaluationPreferences: {}, riskTolerance: request.riskTolerance,
@@ -173,17 +192,22 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
           decisionResult = await this.decisionEngine.decide(decisionReq, {
             idGenerator: this.deps.idGenerator, clock: this.deps.clock,
           });
+          const decData: StageCompleteData = { summary: `Decision: status=${decisionResult.status}, decisions=${decisionResult.decisions.length}.`, resultId: decisionResult.decisionResultId };
+          if (this.telemetry) this.telemetry.recordStageComplete('DECISION', decData);
           trace.push(this.makeTrace('DECISION', stageStart, true,
             `Decision made: status=${decisionResult.status}, decisions=${decisionResult.decisions.length}.`,
             this.decisionEngine.id, decisionResult.decisionResultId));
         } catch (err) {
+          if (this.telemetry) this.telemetry.recordStageFailure('DECISION', [this.safeMessage(err)]);
           trace.push(this.makeTrace('DECISION', stageStart, false, this.safeMessage(err)));
           errors.push(this.safeMessage(err));
           return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (decisionResult.status === 'BLOCKED' || decisionResult.status === 'INVALID') {
           blockers.push(`Decision status is ${decisionResult.status}.`);
-          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+          if (this.telemetry) this.telemetry.recordPipelineEvent('PipelineBlocked', { stage: 'DECISION', summary: `Decision status is ${decisionResult.status}.`, blockers });
+          if (decisionResult.status === 'INVALID' && this.telemetry) this.telemetry.recordPipelineEvent('DecisionRejected', { stage: 'DECISION', summary: 'Decision result rejected as INVALID.' });
+          return this.finalize(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (decisionResult.status === 'NEEDS_DATA') warnings.push('Decision requires additional data.');
         if (decisionResult.status === 'NEEDS_CLARIFICATION') warnings.push('Decision requires clarification.');
@@ -194,6 +218,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
       if (resumeIdx <= 4) {
         currentStage = 'CONFIDENCE';
         const stageStart = this.deps.clock();
+        if (this.telemetry) this.telemetry.recordStageStart('CONFIDENCE');
         try {
           const confReq: ConfidenceRequest = {
             requestId: request.contextRequest.requestId,
@@ -208,19 +233,23 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
             requestedAt: this.deps.clock(),
           };
           confidenceResult = this.confidenceEngine.evaluate(confReq);
+          const confData: StageCompleteData = { summary: `Confidence: score=${confidenceResult.overallScore}, status=${confidenceResult.status}.`, resultId: confidenceResult.confidenceResultId, confidenceScore: confidenceResult.overallScore };
+          if (this.telemetry) { this.telemetry.recordStageComplete('CONFIDENCE', confData); this.telemetry.recordPipelineEvent('ConfidenceCalculated', { stage: 'CONFIDENCE', summary: `Confidence: ${confidenceResult.overallScore}/100.`, confidenceScore: confidenceResult.overallScore }); }
           trace.push(this.makeTrace('CONFIDENCE', stageStart, true,
             `Confidence evaluated: score=${confidenceResult.overallScore}, status=${confidenceResult.status}.`,
             undefined, confidenceResult.confidenceResultId));
         } catch (err) {
+          if (this.telemetry) this.telemetry.recordStageFailure('CONFIDENCE', [this.safeMessage(err)]);
           trace.push(this.makeTrace('CONFIDENCE', stageStart, false, this.safeMessage(err)));
           errors.push(this.safeMessage(err));
           return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
         if (confidenceResult.blocked) {
           blockers.push(...confidenceResult.recommendedActions);
-          return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+          if (this.telemetry) this.telemetry.recordPipelineEvent('PipelineBlocked', { stage: 'CONFIDENCE', summary: 'Confidence evaluation blocked.', blockers: confidenceResult.recommendedActions });
+          return this.finalize(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'BLOCKED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
         }
-        if (confidenceResult.requiresHumanReview) requiresHumanReview = true;
+        if (confidenceResult.requiresHumanReview) { requiresHumanReview = true; if (this.telemetry) this.telemetry.recordPipelineEvent('HumanReviewRequested', { stage: 'CONFIDENCE', summary: 'Confidence evaluation requires human review.' }); }
         if (confidenceResult.status === 'NEEDS_DATA') status = 'NEEDS_DATA';
         else if (confidenceResult.status === 'NEEDS_CLARIFICATION') status = 'NEEDS_CLARIFICATION';
         else if (confidenceResult.status === 'HUMAN_REVIEW_REQUIRED') status = 'REQUIRES_APPROVAL';
@@ -229,12 +258,12 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
 
       if (status === 'COMPLETED' && requiresHumanReview) status = 'REQUIRES_APPROVAL';
 
-      return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+      return this.finalize(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
 
     } catch (err) {
       if (err instanceof InvalidOrchestratorInputError) throw err;
       errors.push(this.safeMessage(err));
-      return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
+      return this.finalize(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, 'FAILED', trace, warnings, errors, blockers, requiresHumanReview, startedAt);
     }
   }
 
@@ -245,6 +274,29 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
   private safeMessage(err: unknown): string {
     if (err instanceof Error) return `Stage failed: ${err.name}`;
     return 'Stage failed: unknown error';
+  }
+
+  private maxRisk(plan: ExecutionPlan): string | undefined {
+    if (plan.risks.length === 0) return undefined;
+    const order = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+    let maxIdx = 0;
+    for (const r of plan.risks) {
+      const idx = order.indexOf(r.level);
+      if (idx > maxIdx) maxIdx = idx;
+    }
+    return order[maxIdx];
+  }
+
+  private finalize(
+    executionId: string, request: CompilerIntelligenceRequest,
+    contextResult: ContextResult | null, intentResult: IntentResult | null,
+    executionPlan: ExecutionPlan | null, decisionResult: DecisionResult | null,
+    confidenceResult: ConfidenceResult | null, currentStage: IntelligenceStage,
+    status: CompilerIntelligenceStatus, trace: TraceEntry[], warnings: string[],
+    errors: string[], blockers: string[], requiresHumanReview: boolean, startedAt: string,
+  ): CompilerIntelligenceResult {
+    if (this.telemetry) this.telemetry.finalizeExecution(status, requiresHumanReview);
+    return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
   }
 
   private build(

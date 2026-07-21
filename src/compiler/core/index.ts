@@ -168,3 +168,19 @@ export type {
   IntelligenceStage, CompilerIntelligenceStatus,
   TraceEntry, CompilerIntelligenceResult, CompilerIntelligenceRequest,
 } from './intelligence';
+
+// ── Telemetry Engine ───────────────────────────────────────────────────────────────
+export {
+  TelemetryEngine, TelemetryEventBus,
+  TELEMETRY_EVENT_TYPES, buildTelemetryEvent,
+  buildExplainabilityFromTrace, buildStageExplanations,
+  TelemetryError, TelemetryNotInitializedError, InvalidTelemetryEventError,
+} from './intelligence';
+export type {
+  ITelemetryEngine, TelemetryEngineDeps,
+  ITelemetryEventBus, TelemetryEventHandler,
+  TelemetryEventType, TelemetryStageStatus,
+  StageTrace, ExecutionTrace, TelemetryMetrics, StageMetric,
+  ExplainabilityRecord, StageExplanation, TelemetryEventPayload,
+  StageCompleteData, PipelineEventData,
+} from './intelligence';

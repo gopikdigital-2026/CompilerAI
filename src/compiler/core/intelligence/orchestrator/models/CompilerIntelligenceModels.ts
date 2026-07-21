@@ -54,22 +54,22 @@ export interface TraceEntry {
 export interface CompilerIntelligenceResult {
   executionId:           string;
   requestId:             string;
-  organizationId:       string;
-  contextResult:        ContextResult | null;
-  intentResult:         IntentResult | null;
-  executionPlan:        ExecutionPlan | null;
-  decisionResult:       DecisionResult | null;
-  confidenceResult:     ConfidenceResult | null;
-  currentStage:         IntelligenceStage;
-  status:               CompilerIntelligenceStatus;
-  trace:                TraceEntry[];
-  warnings:             string[];
-  errors:               string[];
-  blockers:             string[];
-  requiresHumanReview:  boolean;
-  startedAt:            string;   // ISO
-  completedAt:          string;   // ISO
-  version:              string;
+  organizationId:        string;
+  contextResult:         ContextResult | null;
+  intentResult:          IntentResult | null;
+  executionPlan:         ExecutionPlan | null;
+  decisionResult:        DecisionResult | null;
+  confidenceResult:      ConfidenceResult | null;
+  currentStage:          IntelligenceStage;
+  status:                CompilerIntelligenceStatus;
+  trace:                 TraceEntry[];
+  warnings:              string[];
+  errors:                string[];
+  blockers:              string[];
+  requiresHumanReview:   boolean;
+  startedAt:             string;   // ISO
+  completedAt:           string;   // ISO
+  version:               string;
 }
 
 /** Input to the orchestrator. */
@@ -79,7 +79,7 @@ export interface CompilerIntelligenceRequest {
   riskTolerance:     RiskLevel;
   minimumConfidenceThreshold: number;
   /** Stage to resume from (skips earlier stages). Requires pre-populated results. */
-  resumeFrom?:        IntelligenceStage;
+  resumeFrom?:       IntelligenceStage;
   /** Pre-existing results when resuming. */
   existingResults?:  Partial<Pick<CompilerIntelligenceResult, 'contextResult' | 'intentResult' | 'executionPlan' | 'decisionResult'>>;
 }
