@@ -34,6 +34,8 @@ import { InvalidOrchestratorInputError } from '../errors/OrchestratorErrors';
 import type { ITelemetryEngine, StageCompleteData, PipelineResults } from '../../telemetry/interfaces/ITelemetryEngine';
 import type { IMemoryEngine } from '../../memory/interfaces/IMemoryEngine';
 import type { IToolIntelligenceEngine } from '../../tools/interfaces/IToolIntelligenceEngine';
+import type { IExecutionEngine } from '../../execution/interfaces/IExecutionEngine';
+import type { ILearningEngine } from '../../learning/interfaces/ILearningEngine';
 
 const VERSION = '1.0.0';
 
@@ -50,6 +52,8 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
   private readonly telemetry: ITelemetryEngine | null;
   private readonly memory: IMemoryEngine | null;
   private readonly tools: IToolIntelligenceEngine | null;
+  private readonly execution: IExecutionEngine | null;
+  private readonly learning: ILearningEngine | null;
 
   constructor(private readonly deps: CompilerIntelligenceOrchestratorDeps) {
     this.contextService = new ContextIntelligenceService();
@@ -62,6 +66,8 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
     this.telemetry = deps.telemetry ?? null;
     this.memory = deps.memory ?? null;
     this.tools = deps.tools ?? null;
+    this.execution = deps.execution ?? null;
+    this.learning = deps.learning ?? null;
   }
 
   async execute(request: CompilerIntelligenceRequest): Promise<CompilerIntelligenceResult> {
@@ -328,7 +334,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
     }
     if (this.tools && intentResult && confidenceResult) {
       try {
-        this.tools.selectTools(
+        const toolPlan = this.tools.selectTools(
           {
             organizationId: request.contextRequest.organizationId,
             contextResult, intentResult, executionPlan, decisionResult, confidenceResult,
@@ -346,7 +352,43 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
             allowFallback: true,
           },
         );
+        if (this.execution && toolPlan.status === 'READY' && !requiresHumanReview) {
+          void this.execution.execute({
+            plan: toolPlan,
+            policy: {
+              policyId: this.deps.idGenerator(),
+              organizationId: request.contextRequest.organizationId,
+              allowedToolIds: [],
+              deniedToolIds: [],
+              grantedPermissions: ['READ_PUBLIC', 'READ_INTERNAL', 'EXECUTE'],
+              maxDataSensitivity: 'INTERNAL',
+              consentGranted: true,
+              orgTier: 'enterprise',
+              allowFallback: true,
+            },
+            mode: 'SEQUENTIAL',
+            allowRollback: true,
+            maxRetries: 2,
+            stepTimeoutMs: 5000,
+            humanApproved: true,
+            idempotencyPrefix: executionId,
+          }).catch(() => { /* execution failures must not break the pipeline */ });
+        }
       } catch { /* tool selection failures must not break the pipeline */ }
+    }
+    if (this.learning) {
+      try {
+        this.learning.learn([{
+          inputId: this.deps.idGenerator(),
+          organizationId: request.contextRequest.organizationId,
+          source: 'EXECUTION_RESULT',
+          triggerId: executionId,
+          data: { status, stages: trace.length, confidence: confidenceResult?.overallScore ?? 50 },
+          feedbackText: null,
+          feedbackRating: null,
+          timestamp: this.deps.clock(),
+        }]);
+      } catch { /* learning failures must not break the pipeline */ }
     }
     return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
   }

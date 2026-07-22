@@ -5,6 +5,8 @@ import type { CompilerIntelligenceRequest, CompilerIntelligenceResult } from '..
 import type { ITelemetryEngine } from '../../telemetry/interfaces/ITelemetryEngine';
 import type { IMemoryEngine } from '../../memory/interfaces/IMemoryEngine';
 import type { IToolIntelligenceEngine } from '../../tools/interfaces/IToolIntelligenceEngine';
+import type { IExecutionEngine } from '../../execution/interfaces/IExecutionEngine';
+import type { ILearningEngine } from '../../learning/interfaces/ILearningEngine';
 
 export interface CompilerIntelligenceOrchestratorDeps {
   idGenerator:  () => string;
@@ -16,6 +18,10 @@ export interface CompilerIntelligenceOrchestratorDeps {
   memory?:      IMemoryEngine;
   /** Optional tool intelligence engine for tool selection. */
   tools?:       IToolIntelligenceEngine;
+  /** Optional execution engine for tool plan execution. */
+  execution?:   IExecutionEngine;
+  /** Optional learning engine for post-execution learning. */
+  learning?:    ILearningEngine;
 }
 
 export interface ICompilerIntelligenceOrchestrator {

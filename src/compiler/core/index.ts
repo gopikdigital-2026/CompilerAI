@@ -242,3 +242,53 @@ export type {
   ToolPolicy, ToolRiskAssessment, ToolRiskFactor, ToolRiskLevel,
   ToolEvent, ToolEventType,
 } from './intelligence';
+
+// ── Execution Engine ───────────────────────────────────────────────────────────────
+export {
+  ExecutionEngine, ExecutionCoordinator, ToolExecutor,
+  ExecutionPolicyValidator, RetryManager, TimeoutManager,
+  CompensationManager, ExecutionResultBuilder,
+  SimulatedToolAdapter,
+  EXECUTION_STATES, STEP_STATES,
+  isPlanApproved, isPlanExecutable, checkOrganizationMatch,
+  shouldTriggerRollback, computeIdempotencyKey, validateRetryConfig,
+  deriveExecutionState,
+  ExecutionError, PlanNotApprovedError, ExecutionTimeoutError,
+  ExecutionCancelledError, ExecutionPermissionError,
+  IdempotencyViolationError, CompensationError,
+} from './intelligence';
+export type {
+  IExecutionEngine, IExecutionCoordinator, IToolExecutor,
+  IRetryManager, ITimeoutManager, ICompensationManager,
+  IExecutionResultBuilder, IExecutionPolicyValidator,
+  ExecutionEngineDeps,
+  ExecutionState, StepState, ExecutionMode,
+  ExecutionRequest, ExecutionResult, StepResult,
+  ExecutionEvent, ExecutionEventType,
+  ExecutionTraceEntry, RetryConfig, RetryAttempt,
+  CompensationRecord, SimulatedToolConfig,
+} from './intelligence';
+
+// ── Learning Engine ───────────────────────────────────────────────────────────────
+export {
+  LearningEngine, OutcomeEvaluator, FeedbackProcessor,
+  PatternExtractor, RecommendationGenerator, LearningValidator,
+  InMemoryLearningRepository,
+  LEARNING_SOURCES, LEARNING_STATUSES, PATTERN_TYPES,
+  requiresHumanApproval, checkTenantIsolation, canApprove, canReject,
+  validateLearningInput, nextVersion, isValidStatusTransition, isRegression,
+  LearningError, RecommendationNotApprovedError,
+  RecommendationAlreadyProcessedError, LearningValidationError,
+  PatternRegressionError,
+} from './intelligence';
+export type {
+  ILearningEngine, ILearningRepository,
+  IOutcomeEvaluator, IFeedbackProcessor,
+  IPatternExtractor, IRecommendationGenerator, ILearningValidator,
+  LearningEngineDeps,
+  LearningSource, LearningStatus, PatternType,
+  LearningInput, LearningPattern,
+  LearningRecommendation, RecommendationType, RecommendationPriority,
+  LearningRecord, FeedbackEntry, OutcomeEvaluation,
+  LearningEvent, LearningEventType,
+} from './intelligence';
