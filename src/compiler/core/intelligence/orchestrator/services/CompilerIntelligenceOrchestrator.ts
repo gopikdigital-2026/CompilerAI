@@ -33,6 +33,7 @@ import type {
 import { InvalidOrchestratorInputError } from '../errors/OrchestratorErrors';
 import type { ITelemetryEngine, StageCompleteData, PipelineResults } from '../../telemetry/interfaces/ITelemetryEngine';
 import type { IMemoryEngine } from '../../memory/interfaces/IMemoryEngine';
+import type { IToolIntelligenceEngine } from '../../tools/interfaces/IToolIntelligenceEngine';
 
 const VERSION = '1.0.0';
 
@@ -48,6 +49,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
   private readonly confidenceEngine: ConfidenceEngine;
   private readonly telemetry: ITelemetryEngine | null;
   private readonly memory: IMemoryEngine | null;
+  private readonly tools: IToolIntelligenceEngine | null;
 
   constructor(private readonly deps: CompilerIntelligenceOrchestratorDeps) {
     this.contextService = new ContextIntelligenceService();
@@ -59,6 +61,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
     });
     this.telemetry = deps.telemetry ?? null;
     this.memory = deps.memory ?? null;
+    this.tools = deps.tools ?? null;
   }
 
   async execute(request: CompilerIntelligenceRequest): Promise<CompilerIntelligenceResult> {
@@ -322,6 +325,28 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
           requiredHumanReview: requiresHumanReview,
         });
       } catch { /* memory write failures must not break the pipeline */ }
+    }
+    if (this.tools && intentResult && confidenceResult) {
+      try {
+        this.tools.selectTools(
+          {
+            organizationId: request.contextRequest.organizationId,
+            contextResult, intentResult, executionPlan, decisionResult, confidenceResult,
+            riskTolerance: request.riskTolerance,
+          },
+          {
+            policyId: this.deps.idGenerator(),
+            organizationId: request.contextRequest.organizationId,
+            allowedToolIds: [],
+            deniedToolIds: [],
+            grantedPermissions: ['READ_PUBLIC', 'READ_INTERNAL', 'EXECUTE'],
+            maxDataSensitivity: 'INTERNAL',
+            consentGranted: true,
+            orgTier: 'enterprise',
+            allowFallback: true,
+          },
+        );
+      } catch { /* tool selection failures must not break the pipeline */ }
     }
     return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
   }

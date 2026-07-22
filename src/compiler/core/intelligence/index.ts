@@ -177,3 +177,29 @@ export type {
   MemoryEvent, MemoryEventType,
   MemoryType, MemorySensitivity,
 } from './memory';
+
+// ── Tool Intelligence Engine ───────────────────────────────────────────────────
+export {
+  ToolIntelligenceEngine, ToolDiscoveryService, ToolSelector,
+  ToolEligibilityValidator, ToolPermissionEvaluator,
+  ToolRiskAnalyzer, ToolPlanBuilder, ToolRegistry,
+  TOOL_CATEGORIES, TOOL_PERMISSIONS,
+  isToolAllowed, hasRequiredPermissions, isWithinSensitivityLimit,
+  checkConsent, checkOrgTier, findIncompatibleTools, meetsConfidenceThreshold,
+  ToolError, ToolNotFoundError, ToolPermissionDeniedError,
+  ToolIncompatibleError, ToolRegistryError, NoEligibleToolsError,
+} from './tools';
+export type {
+  IToolIntelligenceEngine, ToolIntelligenceEngineDeps,
+  ToolSelectionContext,
+  IToolDiscoveryService, IToolSelector, IToolEligibilityValidator,
+  IToolPermissionEvaluator, IToolRiskAnalyzer, IToolPlanBuilder,
+  IToolRegistry,
+  ToolDefinition, ToolStatus,
+  ToolCapability, ToolCategory,
+  ToolRequirement, ToolPermission,
+  ToolCandidate, ToolSelection, ToolSelectionRationale,
+  ToolExecutionPlan, ToolPlanStep, ToolPlanStatus,
+  ToolPolicy, ToolRiskAssessment, ToolRiskFactor, ToolRiskLevel,
+  ToolEvent, ToolEventType,
+} from './tools';

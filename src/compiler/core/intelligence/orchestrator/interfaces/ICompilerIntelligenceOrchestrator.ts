@@ -4,6 +4,7 @@
 import type { CompilerIntelligenceRequest, CompilerIntelligenceResult } from '../models/CompilerIntelligenceModels';
 import type { ITelemetryEngine } from '../../telemetry/interfaces/ITelemetryEngine';
 import type { IMemoryEngine } from '../../memory/interfaces/IMemoryEngine';
+import type { IToolIntelligenceEngine } from '../../tools/interfaces/IToolIntelligenceEngine';
 
 export interface CompilerIntelligenceOrchestratorDeps {
   idGenerator:  () => string;
@@ -13,6 +14,8 @@ export interface CompilerIntelligenceOrchestratorDeps {
   telemetry?:   ITelemetryEngine;
   /** Optional memory engine for pipeline memory persistence. */
   memory?:      IMemoryEngine;
+  /** Optional tool intelligence engine for tool selection. */
+  tools?:       IToolIntelligenceEngine;
 }
 
 export interface ICompilerIntelligenceOrchestrator {
