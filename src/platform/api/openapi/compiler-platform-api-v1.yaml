@@ -1,0 +1,1202 @@
+openapi: 3.1.0
+info:
+  title: Compiler Platform API
+  description: |
+    Public REST API for the CompilerAI intelligence platform.
+
+    ## Authentication
+    All endpoints (except health/readiness) require authentication via either:
+    - `Authorization: Bearer <JWT>` — JWT token issued by the platform.
+    - `X-API-Key: <apiKey>` — API key associated with an organization.
+
+    ## Multi-Tenancy
+    Every request is scoped to the authenticated principal's organization.
+    Cross-organization access returns 404 (existence is hidden).
+
+    ## Idempotency
+    POST endpoints accept an `idempotencyKey` in the request body.
+    Retries with the same key + same body return the cached response.
+    Retries with the same key + different body return 409 Conflict.
+
+    ## Rate Limiting
+    Requests are rate-limited per organization per endpoint per sliding window.
+    Rate-limited responses return 429 with `retry-after` in the error details.
+
+    ## Standard Response Format
+    All successful responses follow:
+    ```json
+    { "data": <payload>, "meta": { "requestId", "correlationId", "timestamp", "apiVersion" } }
+    ```
+
+    Paginated responses include a `pagination` object:
+    ```json
+    { "data": [...], "pagination": { "nextCursor", "hasMore", "limit" }, "meta": {...} }
+    ```
+
+    Errors follow:
+    ```json
+    { "error": { "code", "message", "details", "retryable" }, "meta": {...} }
+    ```
+  version: 1.0.0
+  contact:
+    name: CompilerAI Platform
+    url: https://compiler.ai
+  license:
+    name: Proprietary
+
+servers:
+  - url: /api/v1
+    description: Base path for all v1 endpoints
+
+# ── Tags ──────────────────────────────────────────────────────────────────────────
+tags:
+  - name: Executions
+    description: Create and manage intelligence execution runs
+  - name: Workflows
+    description: Define, validate, and version workflow definitions
+  - name: Approvals
+    description: Human-in-the-loop approval gates
+  - name: Telemetry
+    description: Execution telemetry events and traces
+  - name: Platform
+    description: Health, readiness, capabilities, and version info
+
+# ── Paths ──────────────────────────────────────────────────────────────────────────
+paths:
+  # ── Executions ────────────────────────────────────────────────────────────────────
+  /executions:
+    post:
+      tags: [Executions]
+      summary: Create a new execution
+      description: |
+        Submits a new intelligence execution request. The execution runs
+        asynchronously — the response returns 202 Accepted with the execution
+        metadata. Poll `GET /executions/{executionId}` for status updates.
+      operationId: createExecution
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExecutionRequest'
+      responses:
+        '202':
+          description: Execution accepted
+          headers:
+            Location:
+              schema: { type: string }
+              description: URL of the created execution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /executions/{executionId}:
+    get:
+      tags: [Executions]
+      summary: Get execution status
+      operationId: getExecution
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Execution details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /executions/{executionId}/result:
+    get:
+      tags: [Executions]
+      summary: Get execution result
+      description: Returns the full result including intelligence output, events, warnings, and errors.
+      operationId: getExecutionResult
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Execution result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResultResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /executions/{executionId}/pause:
+    post:
+      tags: [Executions]
+      summary: Pause a running execution
+      operationId: pauseExecution
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Execution paused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InvalidState'
+
+  /executions/{executionId}/resume:
+    post:
+      tags: [Executions]
+      summary: Resume a paused execution
+      operationId: resumeExecution
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resumeToken]
+              properties:
+                resumeToken:
+                  type: string
+                  description: Token returned when the execution was paused/checkpointed
+      responses:
+        '200':
+          description: Execution resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InvalidState'
+
+  /executions/{executionId}/cancel:
+    post:
+      tags: [Executions]
+      summary: Cancel a running or paused execution
+      description: |
+        Cancels the execution and triggers compensation for any completed steps.
+        Terminal-state executions (COMPLETED, FAILED, CANCELLED) cannot be cancelled.
+      operationId: cancelExecution
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Execution cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InvalidState'
+
+  /executions/{executionId}/events:
+    get:
+      tags: [Executions, Telemetry]
+      summary: Get execution events
+      operationId: getExecutionEvents
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Event list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TelemetryEventResponse'
+                  meta:
+                    $ref: '#/components/schemas/ApiMeta'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /executions/{executionId}/trace:
+    get:
+      tags: [Executions, Telemetry]
+      summary: Get execution trace
+      operationId: getExecutionTrace
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Execution trace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionTraceResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Workflows ──────────────────────────────────────────────────────────────────────
+  /workflows:
+    post:
+      tags: [Workflows]
+      summary: Create a new workflow
+      operationId: createWorkflow
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    get:
+      tags: [Workflows]
+      summary: List workflows
+      operationId: listWorkflows
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Workflow list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowResponse'
+                  meta:
+                    $ref: '#/components/schemas/ApiMeta'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+
+  /workflows/{workflowId}:
+    get:
+      tags: [Workflows]
+      summary: Get workflow details
+      operationId: getWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Workflow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /workflows/validate:
+    post:
+      tags: [Workflows]
+      summary: Validate a workflow definition
+      description: Dry-run validation without persisting. Returns errors if the definition is invalid.
+      operationId: validateWorkflow
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowValidationResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+
+  /workflows/{workflowId}/versions:
+    post:
+      tags: [Workflows]
+      summary: Create a new workflow version
+      description: Creates a new immutable version of an existing workflow with updated nodes/edges.
+      operationId: createWorkflowVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+      responses:
+        '201':
+          description: New version created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /workflows/{workflowId}/versions/{version}/activate:
+    post:
+      tags: [Workflows]
+      summary: Activate a workflow version
+      description: Sets the specified version as the active version for execution.
+      operationId: activateWorkflowVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Version activated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      activated: { type: boolean }
+                      version: { type: string }
+                  meta:
+                    $ref: '#/components/schemas/ApiMeta'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /workflows/{workflowId}/deactivate:
+    post:
+      tags: [Workflows]
+      summary: Deactivate a workflow
+      operationId: deactivateWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Workflow deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      deactivated: { type: boolean }
+                  meta:
+                    $ref: '#/components/schemas/ApiMeta'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Approvals ──────────────────────────────────────────────────────────────────────
+  /approvals:
+    get:
+      tags: [Approvals]
+      summary: List pending approvals
+      operationId: listApprovals
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: executionId
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Pending approvals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApprovals'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+
+  /approvals/{approvalId}:
+    get:
+      tags: [Approvals]
+      summary: Get approval details
+      operationId: getApproval
+      parameters:
+        - $ref: '#/components/parameters/ApprovalId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Approval details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /approvals/{approvalId}/approve:
+    post:
+      tags: [Approvals]
+      summary: Approve a pending request
+      operationId: approveRequest
+      parameters:
+        - $ref: '#/components/parameters/ApprovalId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200':
+          description: Approval resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InvalidState'
+
+  /approvals/{approvalId}/reject:
+    post:
+      tags: [Approvals]
+      summary: Reject a pending request
+      operationId: rejectRequest
+      parameters:
+        - $ref: '#/components/parameters/ApprovalId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200':
+          description: Approval resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InvalidState'
+
+  /approvals/{approvalId}/request-changes:
+    post:
+      tags: [Approvals]
+      summary: Request changes to a pending request
+      operationId: requestChanges
+      parameters:
+        - $ref: '#/components/parameters/ApprovalId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200':
+          description: Approval resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InvalidState'
+
+  # ── Telemetry alias ────────────────────────────────────────────────────────────────
+  /executions/{executionId}/telemetry:
+    get:
+      tags: [Telemetry]
+      summary: Get execution telemetry events (alias)
+      operationId: getTelemetryEvents
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Telemetry events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TelemetryEventResponse'
+                  meta:
+                    $ref: '#/components/schemas/ApiMeta'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Platform ────────────────────────────────────────────────────────────────────────
+  /capabilities:
+    get:
+      tags: [Platform]
+      summary: Get platform capabilities
+      description: Returns available engines, node types, tool types, runtime statuses, and feature flags.
+      operationId: getCapabilities
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+
+  /health:
+    get:
+      tags: [Platform]
+      summary: Health check
+      description: Returns service health status. No authentication required.
+      operationId: getHealth
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /ready:
+    get:
+      tags: [Platform]
+      summary: Readiness check
+      description: Returns readiness status for load balancer probes. No authentication required.
+      operationId: getReadiness
+      responses:
+        '200':
+          description: Readiness status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+
+  /version:
+    get:
+      tags: [Platform]
+      summary: Get API version
+      description: Returns the current API version, runtime version, and build date.
+      operationId: getVersion
+      responses:
+        '200':
+          description: Version info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+
+  /openapi:
+    get:
+      tags: [Platform]
+      summary: Get OpenAPI specification
+      description: Returns the full OpenAPI 3.1 specification for this API. No authentication required.
+      operationId: getOpenApiSpec
+      responses:
+        '200':
+          description: OpenAPI 3.1 specification (YAML)
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+# ── Components ──────────────────────────────────────────────────────────────────────
+components:
+  parameters:
+    ExecutionId:
+      name: executionId
+      in: path
+      required: true
+      schema: { type: string }
+      description: Unique execution identifier
+    WorkflowId:
+      name: workflowId
+      in: path
+      required: true
+      schema: { type: string }
+      description: Unique workflow identifier
+    ApprovalId:
+      name: approvalId
+      in: path
+      required: true
+      schema: { type: string }
+      description: Unique approval identifier
+    Version:
+      name: version
+      in: path
+      required: true
+      schema: { type: string }
+      description: Workflow version number
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema: { type: string, format: uuid }
+      description: Optional client-provided correlation ID for request tracing
+
+  responses:
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    AuthenticationRequired:
+      description: Authentication is required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    AccessDenied:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    InvalidState:
+      description: Invalid state transition
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    IdempotencyConflict:
+      description: Idempotency key conflict (same key, different body)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+
+  schemas:
+    # ── Meta ────────────────────────────────────────────────────────────────────────
+    ApiMeta:
+      type: object
+      properties:
+        requestId: { type: string }
+        correlationId: { type: string }
+        timestamp: { type: string, format: date-time }
+        apiVersion: { type: string }
+      required: [requestId, correlationId, timestamp, apiVersion]
+
+    # ── Execution schemas ────────────────────────────────────────────────────────────
+    CreateExecutionRequest:
+      type: object
+      required: [workflowId, input, idempotencyKey]
+      properties:
+        workflowId:
+          type: string
+          description: ID of the workflow to execute
+        input:
+          type: object
+          description: Input parameters for the execution
+          additionalProperties: true
+        idempotencyKey:
+          type: string
+          description: Client-generated unique key for idempotent retries
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ExecutionResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            executionId: { type: string }
+            status:
+              type: string
+              enum: [CREATED, VALIDATING, RUNNING, WAITING_FOR_APPROVAL, PAUSED, RESUMING, COMPLETED, PARTIAL, BLOCKED, CANCELLED, FAILED]
+            createdAt: { type: string, format: date-time }
+            links:
+              type: object
+              properties:
+                self: { type: string }
+                events: { type: string }
+          required: [executionId, status, createdAt, links]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    ExecutionResultResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            executionId: { type: string }
+            status: { type: string }
+            intelligenceResult:
+              type: object
+              nullable: true
+              additionalProperties: true
+            startedAt: { type: string, format: date-time }
+            completedAt: { type: string, format: date-time }
+            durationMs: { type: number }
+            warnings:
+              type: array
+              items: { type: string }
+            errors:
+              type: array
+              items: { type: string }
+          required: [executionId, status, startedAt, completedAt, durationMs, warnings, errors]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    # ── Workflow schemas ──────────────────────────────────────────────────────────────
+    CreateWorkflowRequest:
+      type: object
+      required: [name, description, nodes, edges, mode]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowEdge'
+        mode:
+          type: string
+          enum: [SEQUENTIAL, DAG]
+
+    WorkflowNode:
+      type: object
+      required: [nodeId, type, label, order, dependsOn, requiresApproval]
+      properties:
+        nodeId: { type: string }
+        type:
+          type: string
+          enum: [INTELLIGENCE, MEMORY_READ, MEMORY_WRITE, TOOL_SELECTION, TOOL_EXECUTION, HUMAN_APPROVAL, CONDITION, PARALLEL, JOIN, LEARNING, FINALIZATION]
+        label: { type: string }
+        order: { type: integer }
+        dependsOn:
+          type: array
+          items: { type: string }
+        requiresApproval: { type: boolean }
+
+    WorkflowEdge:
+      type: object
+      required: [sourceNodeId, targetNodeId]
+      properties:
+        sourceNodeId: { type: string }
+        targetNodeId: { type: string }
+        condition:
+          type: string
+          nullable: true
+
+    WorkflowResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            workflowId: { type: string }
+            organizationId: { type: string }
+            name: { type: string }
+            description: { type: string }
+            nodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowNode'
+            edges:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowEdge'
+            mode: { type: string }
+            version: { type: string }
+            contentHash: { type: string }
+            createdAt: { type: string, format: date-time }
+            active: { type: boolean }
+          required: [workflowId, name, version, active]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    WorkflowValidationResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            valid: { type: boolean }
+            errors:
+              type: array
+              items: { type: string }
+          required: [valid, errors]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    # ── Approval schemas ──────────────────────────────────────────────────────────────
+    ApprovalResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            approvalId: { type: string }
+            executionId: { type: string }
+            nodeId: { type: string }
+            nodeLabel: { type: string }
+            reason: { type: string }
+            description: { type: string }
+            riskLevel: { type: string }
+            confidenceScore: { type: number }
+            status:
+              type: string
+              enum: [PENDING, APPROVED, REJECTED, CHANGES_REQUESTED]
+            createdAt: { type: string, format: date-time }
+          required: [approvalId, executionId, nodeId, status]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    ApprovalDecisionRequest:
+      type: object
+      required: [comment]
+      properties:
+        comment: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+
+    PaginatedApprovals:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalResponse'
+        pagination:
+          type: object
+          properties:
+            nextCursor:
+              type: string
+              nullable: true
+            hasMore: { type: boolean }
+            limit: { type: integer }
+          required: [nextCursor, hasMore, limit]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    # ── Telemetry schemas ─────────────────────────────────────────────────────────────
+    TelemetryEventResponse:
+      type: object
+      properties:
+        eventId: { type: string }
+        eventType: { type: string }
+        executionId: { type: string }
+        timestamp: { type: string, format: date-time }
+        summary: { type: string }
+        nodeId:
+          type: string
+          nullable: true
+      required: [eventId, eventType, executionId, timestamp, summary]
+
+    ExecutionTraceResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            executionId: { type: string }
+            stages:
+              type: array
+              items:
+                type: object
+                properties:
+                  stage: { type: string }
+                  startedAt: { type: string, format: date-time }
+                  completedAt: { type: string, format: date-time }
+                  success: { type: boolean }
+                  summary: { type: string }
+          required: [executionId, stages]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    # ── Platform schemas ──────────────────────────────────────────────────────────────
+    CapabilityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            engines:
+              type: array
+              items: { type: string }
+            nodeTypes:
+              type: array
+              items: { type: string }
+            toolTypes:
+              type: array
+              items: { type: string }
+            runtimeStatuses:
+              type: array
+              items: { type: string }
+            apiVersion: { type: string }
+            runtimeVersion: { type: string }
+            features:
+              type: object
+              additionalProperties: { type: boolean }
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    HealthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            services:
+              type: object
+              additionalProperties:
+                type: string
+                enum: [up, down]
+            version: { type: string }
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    ReadinessResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            ready: { type: boolean }
+            checks:
+              type: object
+              additionalProperties: { type: boolean }
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    VersionResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            apiVersion: { type: string }
+            runtimeVersion: { type: string }
+            buildDate: { type: string }
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+
+    # ── Error schema ──────────────────────────────────────────────────────────────────
+    ApiErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - AUTHENTICATION_REQUIRED
+                - ACCESS_DENIED
+                - ORGANIZATION_MISMATCH
+                - RESOURCE_NOT_FOUND
+                - EXECUTION_NOT_FOUND
+                - WORKFLOW_NOT_FOUND
+                - APPROVAL_NOT_FOUND
+                - INVALID_EXECUTION_STATE
+                - INVALID_RESUME_TOKEN
+                - IDEMPOTENCY_CONFLICT
+                - WORKFLOW_VALIDATION_FAILED
+                - RATE_LIMIT_EXCEEDED
+                - REQUEST_TIMEOUT
+                - RUNTIME_UNAVAILABLE
+                - INTERNAL_ERROR
+            message: { type: string }
+            details:
+              type: array
+              items: {}
+            retryable: { type: boolean }
+          required: [code, message, retryable]
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+      required: [error, meta]
+
+# ── Security ────────────────────────────────────────────────────────────────────────
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+securitySchemes:
+  BearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT token issued by the platform
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-Key
+    description: API key associated with an organization
