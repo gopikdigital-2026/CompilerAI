@@ -55,6 +55,20 @@ The `ToolsResource` class exists with `list()` and `selectTools()` methods. All 
 // Response: ApiSuccessResponse<ToolExecutionPlan>
 ```
 
+## Execution List Endpoint (NOT IMPLEMENTED)
+
+The Platform API has no `GET /api/v1/executions` endpoint to list executions. The CLI's `compiler executions list` command cannot fetch a list of executions.
+
+### Suggested Endpoint
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/executions` | List executions with optional filters (status, limit, cursor) |
+
+### SDK Status
+
+The SDK does not expose a `list()` method on the `ExecutionsResource` because there is no endpoint to call.
+
 ## Pagination Gaps
 
 ### `GET /api/v1/workflows`
