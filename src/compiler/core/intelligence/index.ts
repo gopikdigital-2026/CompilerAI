@@ -154,3 +154,26 @@ export type {
   PipelineBlockedEvent, HumanReviewRequestedEvent,
   ConfidenceCalculatedEvent, DecisionRejectedEvent,
 } from './telemetry';
+
+// ── Memory Intelligence Engine ─────────────────────────────────────────────────
+export {
+  MemoryEngine, InMemoryMemoryRepository,
+  MemoryExtractor, MemoryValidator, MemoryRetriever,
+  MemoryRanker, MemoryConsolidator, MemoryLifecycleManager,
+  MEMORY_VERSION, MEMORY_TYPES, MEMORY_SENSITIVITIES, SENSITIVE_LEVELS, isSensitive,
+  DEFAULT_TTL_MS, enforceConsent, validateEntry, computeExpiry,
+  isExpired, computeContentHash, isDuplicate, filterByMaxSensitivity,
+  MemoryError, SensitiveDataBlockedError, MemoryValidationError,
+  MemoryNotFoundError, DuplicateMemoryError, TenantIsolationError,
+} from './memory';
+export type {
+  IMemoryEngine, MemoryEngineDeps, MemoryWriteRequest,
+  IMemoryExtractor, IMemoryValidator, IMemoryRetriever,
+  IMemoryRanker, IMemoryConsolidator, IMemoryLifecycleManager,
+  IMemoryRepository,
+  MemoryEntry, WorkingMemory, SessionMemory, OrganizationMemory,
+  SemanticMemory, ExecutionMemory,
+  MemoryQuery, MemoryRetrievalResult,
+  MemoryEvent, MemoryEventType,
+  MemoryType, MemorySensitivity,
+} from './memory';

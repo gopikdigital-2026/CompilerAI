@@ -189,3 +189,30 @@ export type {
   PipelineBlockedEvent, HumanReviewRequestedEvent,
   ConfidenceCalculatedEvent, DecisionRejectedEvent,
 } from './intelligence';
+
+// ── Memory Intelligence Engine ───────────────────────────────────────────────────────
+export {
+  MemoryEngine, InMemoryMemoryRepository,
+  MemoryExtractor, MemoryValidator, MemoryRetriever,
+  MemoryRanker, MemoryConsolidator, MemoryLifecycleManager,
+  MEMORY_VERSION, MEMORY_TYPES, MEMORY_SENSITIVITIES, SENSITIVE_LEVELS, isSensitive,
+  DEFAULT_TTL_MS, enforceConsent, validateEntry, computeExpiry,
+  isExpired, computeContentHash, isDuplicate, filterByMaxSensitivity,
+  MemoryError, SensitiveDataBlockedError, MemoryValidationError,
+  MemoryNotFoundError, DuplicateMemoryError, TenantIsolationError,
+} from './intelligence';
+export type {
+  IMemoryEngine, MemoryEngineDeps, MemoryWriteRequest,
+  IMemoryExtractor, IMemoryValidator, IMemoryRetriever,
+  IMemoryRanker, IMemoryConsolidator, IMemoryLifecycleManager,
+  IMemoryRepository,
+  MemoryEntry as IntelligenceMemoryEntry,
+  WorkingMemory as IntelligenceWorkingMemory,
+  SessionMemory as IntelligenceSessionMemory,
+  OrganizationMemory as IntelligenceOrganizationMemory,
+  SemanticMemory as IntelligenceSemanticMemory,
+  ExecutionMemory as IntelligenceExecutionMemory,
+  MemoryQuery, MemoryRetrievalResult,
+  MemoryEvent, MemoryEventType,
+  MemoryType, MemorySensitivity,
+} from './intelligence';

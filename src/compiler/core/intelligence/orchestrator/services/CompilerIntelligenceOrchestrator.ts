@@ -32,6 +32,7 @@ import type {
 } from '../interfaces/ICompilerIntelligenceOrchestrator';
 import { InvalidOrchestratorInputError } from '../errors/OrchestratorErrors';
 import type { ITelemetryEngine, StageCompleteData, PipelineResults } from '../../telemetry/interfaces/ITelemetryEngine';
+import type { IMemoryEngine } from '../../memory/interfaces/IMemoryEngine';
 
 const VERSION = '1.0.0';
 
@@ -46,6 +47,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
   private readonly decisionEngine: DecisionEngine;
   private readonly confidenceEngine: ConfidenceEngine;
   private readonly telemetry: ITelemetryEngine | null;
+  private readonly memory: IMemoryEngine | null;
 
   constructor(private readonly deps: CompilerIntelligenceOrchestratorDeps) {
     this.contextService = new ContextIntelligenceService();
@@ -56,6 +58,7 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
       idGenerator: deps.idGenerator, clock: deps.clock, factorWeights: deps.factorWeights,
     });
     this.telemetry = deps.telemetry ?? null;
+    this.memory = deps.memory ?? null;
   }
 
   async execute(request: CompilerIntelligenceRequest): Promise<CompilerIntelligenceResult> {
@@ -298,6 +301,27 @@ export class CompilerIntelligenceOrchestrator implements ICompilerIntelligenceOr
     if (this.telemetry) {
       const results: PipelineResults = { contextResult, intentResult, executionPlan, decisionResult, confidenceResult };
       this.telemetry.finalizeExecution(status, requiresHumanReview, results);
+    }
+    if (this.memory) {
+      try {
+        this.memory.write({
+          organizationId: request.contextRequest.organizationId,
+          executionId,
+          type: 'EXECUTION',
+          content: `Execution ${executionId} ${status} after ${trace.length} stages.`,
+          source: 'orchestrator',
+          confidence: confidenceResult?.overallScore ?? 50,
+          relevance: 80,
+          sensitivity: 'INTERNAL',
+          consentGranted: true,
+          tags: ['pipeline', status],
+          metadata: { stageCount: trace.length, warningCount: warnings.length, errorCount: errors.length },
+          executionStatus: status,
+          completedStages: trace.filter(t => t.success).map(t => t.stage),
+          finalConfidence: confidenceResult?.overallScore ?? undefined,
+          requiredHumanReview: requiresHumanReview,
+        });
+      } catch { /* memory write failures must not break the pipeline */ }
     }
     return this.build(executionId, request, contextResult, intentResult, executionPlan, decisionResult, confidenceResult, currentStage, status, trace, warnings, errors, blockers, requiresHumanReview, startedAt);
   }

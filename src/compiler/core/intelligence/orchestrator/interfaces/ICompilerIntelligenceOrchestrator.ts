@@ -3,6 +3,7 @@
 
 import type { CompilerIntelligenceRequest, CompilerIntelligenceResult } from '../models/CompilerIntelligenceModels';
 import type { ITelemetryEngine } from '../../telemetry/interfaces/ITelemetryEngine';
+import type { IMemoryEngine } from '../../memory/interfaces/IMemoryEngine';
 
 export interface CompilerIntelligenceOrchestratorDeps {
   idGenerator:  () => string;
@@ -10,6 +11,8 @@ export interface CompilerIntelligenceOrchestratorDeps {
   factorWeights: Record<string, number>;
   /** Optional telemetry engine for tracing and event emission. */
   telemetry?:   ITelemetryEngine;
+  /** Optional memory engine for pipeline memory persistence. */
+  memory?:      IMemoryEngine;
 }
 
 export interface ICompilerIntelligenceOrchestrator {
