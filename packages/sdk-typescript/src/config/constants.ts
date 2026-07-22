@@ -1,0 +1,9 @@
+export const API_VERSION = 'v1' as const;
+export const DEFAULT_BASE_URL = 'http://localhost:3000' as const;
+export const SDK_VERSION = '1.0.0' as const;
+export const DEFAULT_TIMEOUT_MS = 30_000;
+export const DEFAULT_MAX_RETRIES = 2;
+export const DEFAULT_RETRY_DELAY_MS = 500;
+export const IDEMPOTENCY_HEADER = 'Idempotency-Key';
+export const REQUEST_ID_HEADER = 'X-Request-Id';
+export const CORRELATION_ID_HEADER = 'X-Correlation-Id';
