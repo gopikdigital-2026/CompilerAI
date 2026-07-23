@@ -1,0 +1,32 @@
+{
+  "id": "data-enricher",
+  "name": "Data Enricher",
+  "description": "Enriches execution context with external data sources for improved AI reasoning",
+  "version": "1.2.0",
+  "author": "CompilerAI Team",
+  "category": "data",
+  "capabilities": [
+    "context-enrichment",
+    "data-lookup",
+    "schema-mapping"
+  ],
+  "permissions": [
+    "read:memory",
+    "write:memory",
+    "read:executions"
+  ],
+  "runtimeCompatibility": [
+    "compiler-runtime",
+    "node"
+  ],
+  "dependencies": [
+    {
+      "toolId": "context-validator",
+      "versionRange": ">=1.0.0"
+    }
+  ],
+  "entrypoint": "./dist/index.js",
+  "checksum": "a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890",
+  "signature": "sig_a1b2c3d4e5f67890_compilerai_verified_signature_data_enricher",
+  "verified": true
+}
