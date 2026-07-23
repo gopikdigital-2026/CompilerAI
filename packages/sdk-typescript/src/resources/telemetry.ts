@@ -1,5 +1,5 @@
 import type { HttpTransport } from '../transport/HttpTransport';
-import type { TelemetryEvent, ExecutionTrace } from '../types';
+import type { TelemetryEvent } from '../types';
 
 export class TelemetryResource {
   constructor(private readonly transport: HttpTransport) {}

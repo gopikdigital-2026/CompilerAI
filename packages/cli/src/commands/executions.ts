@@ -54,9 +54,8 @@ export async function cmdRun(
 
 export async function cmdExecutionsList(
   output: Output,
-  opts: ResolvedCliOptions,
+  _opts: ResolvedCliOptions,
 ): Promise<number> {
-  const client = createClient(opts);
   const spinner = output.spinner;
   spinner?.start('Fetching executions...');
 

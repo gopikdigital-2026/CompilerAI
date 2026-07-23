@@ -1,4 +1,4 @@
-import type { HttpTransport, RequestOptions } from '../transport/HttpTransport';
+import type { HttpTransport } from '../transport/HttpTransport';
 import type {
   CreateWorkflowRequest,
   WorkflowResponse,

@@ -1,7 +1,7 @@
 import type { ResolvedConfig } from '../config/CompilerAIConfig';
 import type { ApiErrorResponse, ApiSuccessResponse, PaginatedResponse } from '../types';
 import { API_VERSION, SDK_VERSION, IDEMPOTENCY_HEADER, REQUEST_ID_HEADER, CORRELATION_ID_HEADER } from '../config/constants';
-import { fromApiError, NetworkError, TimeoutError, RateLimitError, ServerError, isCompilerAIError } from '../errors';
+import { fromApiError, NetworkError, TimeoutError, ServerError, isCompilerAIError } from '../errors';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 

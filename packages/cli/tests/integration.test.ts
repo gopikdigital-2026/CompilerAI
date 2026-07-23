@@ -63,7 +63,7 @@ function mockApiServer(port: number): Server {
       }
 
       if (url === '/api/v1/executions' && method === 'POST') {
-        const parsed = JSON.parse(body || '{}');
+        JSON.parse(body || '{}');
         res.writeHead(202);
         res.end(JSON.stringify({ data: { executionId: 'exec_1', status: 'RUNNING', createdAt: new Date().toISOString(), links: { self: '/executions/exec_1', events: '/executions/exec_1/events' } }, meta: okMeta }));
         return;

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { CompilerAI } from '../src/CompilerAI';
-import type { ApiSuccessResponse, ExecutionResponse, WorkflowResponse, ApprovalResponse, PaginatedResponse, HealthResponse } from '../src/types';
+import type { WorkflowResponse, ApprovalResponse, PaginatedResponse, HealthResponse } from '../src/types';
 import { NotFoundError } from '../src/errors';
 
 function mockFetch(handler: (url: string, init: RequestInit) => { status: number; body: unknown }): typeof fetch {
