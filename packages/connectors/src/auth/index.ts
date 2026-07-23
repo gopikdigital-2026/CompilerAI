@@ -86,3 +86,13 @@ export interface StoredCredentials {
   createdAt: ISOString;
   updatedAt: ISOString;
 }
+
+// Runtime auth implementations
+export type { ITokenRefreshProvider } from './TokenRefreshProvider';
+export { TestTokenRefreshProvider, FailingTokenRefreshProvider } from './TokenRefreshProvider';
+export type { OAuth2TokenManagerOptions } from './OAuth2TokenManager';
+export { OAuth2TokenManager } from './OAuth2TokenManager';
+export type { ApiKeyAuthConfig } from './ApiKeyAuthProvider';
+export { ApiKeyAuthProvider } from './ApiKeyAuthProvider';
+export type { BearerTokenAuthConfig } from './BearerTokenAuthProvider';
+export { BearerTokenAuthProvider } from './BearerTokenAuthProvider';
