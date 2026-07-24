@@ -245,3 +245,70 @@ export type { GitHubPaginationResult, GitHubPaginationLinks, GitHubPaginationCon
 export { DEFAULT_PAGINATION_CONFIG } from './providers/github';
 export type { GitHubWebhookEvent, GitHubWebhookHeaders } from './providers/github';
 export { SUPPORTED_WEBHOOK_EVENTS } from './providers/github';
+
+// Google Workspace connector (Sprint 26)
+export { GoogleApiClient, DEFAULT_GOOGLE_CONFIG } from './providers/google';
+export type { GoogleApiClientConfig, GoogleResponse, GoogleRequestOptions, GoogleService } from './providers/google';
+export { GoogleRequestBuilder } from './providers/google';
+export { GoogleErrorMapper } from './providers/google';
+export { GoogleRateLimitMapper } from './providers/google';
+export type { GoogleRateLimitInfo } from './providers/google';
+export { isGoogleRateLimitReason } from './providers/google';
+export { GooglePagination } from './providers/google';
+export { GoogleOAuth2Adapter } from './providers/google';
+export { GoogleTokenRefreshProvider } from './providers/google';
+export type { IGoogleTokenRefreshProvider, GoogleTokenRefreshResponse } from './providers/google';
+export {
+  GOOGLE_DRIVE_SCOPES,
+  GOOGLE_GMAIL_SCOPES,
+  GOOGLE_CALENDAR_SCOPES,
+  DEFAULT_GOOGLE_SCOPES,
+  GOOGLE_TOKEN_ENDPOINT,
+  GOOGLE_AUTHORIZATION_ENDPOINT,
+  GOOGLE_SERVICE_ACCOUNT_NOT_IMPLEMENTED,
+} from './providers/google';
+export type { GoogleServiceAccountCredentials, GoogleServiceAccountConfig } from './providers/google';
+export { GoogleWorkspaceConnector } from './providers/google';
+export { GoogleWorkspaceConnectorProvider } from './providers/google';
+export {
+  GOOGLE_CONNECTOR_ID,
+  createGoogleWorkspaceOperations,
+  registerGoogleWorkspaceOperations,
+  registerGoogleConnector,
+  GOOGLE_OPERATION_NAMES,
+} from './providers/google';
+export type { RegisterGoogleConnectorOptions } from './providers/google';
+export { GoogleDriveMapper } from './providers/google';
+export { GoogleGmailMapper } from './providers/google';
+export { GoogleCalendarMapper } from './providers/google';
+export type { GoogleDriveFile, GoogleDriveOwner, GoogleDriveFolder, GoogleDriveFileResponse, GoogleDriveFileListResponse } from './providers/google';
+export type {
+  GoogleGmailMessage, GoogleGmailAttachment, GoogleGmailLabel,
+  GoogleGmailMessageResponse, GoogleGmailMessagePart, GoogleGmailMessageListResponse, GoogleGmailLabelListResponse,
+} from './providers/google';
+export type {
+  GoogleCalendarInfo, GoogleCalendarEvent, GoogleCalendarEventTime, GoogleCalendarEventAttendee,
+  GoogleCalendarEventReminders, GoogleFreeBusyResult, GoogleFreeBusyCalendar,
+  GoogleCalendarListResponse, GoogleCalendarInfoResponse, GoogleCalendarEventListResponse,
+  GoogleCalendarEventResponse, GoogleFreeBusyRequestResponse,
+} from './providers/google';
+export type { GooglePageResult, GooglePaginationConfig } from './providers/google';
+export { DEFAULT_GOOGLE_PAGINATION_CONFIG } from './providers/google';
+export type { ListFilesInput, ListFilesOutput } from './providers/google';
+export type { GetFileInput, GetFileOutput } from './providers/google';
+export type { SearchFilesInput, SearchFilesOutput } from './providers/google';
+export type { CreateFolderInput, CreateFolderOutput } from './providers/google';
+export type { UploadFileInput, UploadFileOutput } from './providers/google';
+export type { UpdateFileMetadataInput, UpdateFileMetadataOutput } from './providers/google';
+export type { ListMessagesInput, ListMessagesOutput } from './providers/google';
+export type { GetMessageInput, GetMessageOutput } from './providers/google';
+export type { ListLabelsInput, ListLabelsOutput } from './providers/google';
+export type { SendMessageInput, SendMessageOutput } from './providers/google';
+export type { CreateDraftInput, CreateDraftOutput } from './providers/google';
+export type { ListCalendarsInput, ListCalendarsOutput } from './providers/google';
+export type { GetCalendarInput, GetCalendarOutput } from './providers/google';
+export type { ListEventsInput, ListEventsOutput } from './providers/google';
+export type { GetEventInput, GetEventOutput } from './providers/google';
+export type { CreateEventInput, CreateEventOutput } from './providers/google';
+export type { UpdateEventInput, UpdateEventOutput } from './providers/google';
+export type { QueryFreeBusyInput, QueryFreeBusyOutput } from './providers/google';

@@ -1,108 +1,98 @@
-import type {
-  Connector,
-  ConnectorProvider,
-  ConnectorMetadata,
-  ConnectorCapability,
-  ConnectorAuthRequirements,
-  ConnectorProviderConfig,
-} from '../../types/index';
-import { BaseConnector } from '../../core/BaseConnector';
+export { GoogleApiClient, DEFAULT_GOOGLE_CONFIG } from './GoogleApiClient';
+export type { GoogleApiClientConfig, GoogleResponse, GoogleRequestOptions, FetchLike, GoogleService } from './GoogleApiClient';
+export { GoogleRequestBuilder } from './GoogleRequestBuilder';
+export { GoogleErrorMapper } from './GoogleErrorMapper';
+export { GoogleRateLimitMapper } from './GoogleRateLimitMapper';
+export type { GoogleRateLimitInfo } from './GoogleRateLimitMapper';
+export { isGoogleRateLimitReason } from './GoogleRateLimitMapper';
+export { GooglePagination } from './GooglePagination';
 
-const METADATA: ConnectorMetadata = {
-  id: 'google_workspace',
-  displayName: 'Google Workspace',
-  description: 'Connect to Google Workspace services: Gmail, Drive, Calendar, Sheets',
-  category: 'productivity',
-  icon: 'google',
-  vendor: 'Google',
-  documentationUrl: 'https://developers.google.com/workspace',
-  version: '1.0.0',
-  tags: ['google', 'gmail', 'drive', 'calendar', 'sheets', 'workspace'],
-};
+export { GoogleOAuth2Adapter } from './auth/GoogleOAuth2Adapter';
+export { GoogleTokenRefreshProvider, TestTokenRefreshProvider, FailingTokenRefreshProvider } from './auth/GoogleTokenRefreshProvider';
+export type { IGoogleTokenRefreshProvider, GoogleTokenRefreshResponse } from './auth/GoogleTokenRefreshProvider';
+export {
+  GOOGLE_DRIVE_SCOPES,
+  GOOGLE_GMAIL_SCOPES,
+  GOOGLE_CALENDAR_SCOPES,
+  DEFAULT_GOOGLE_SCOPES,
+  GOOGLE_TOKEN_ENDPOINT,
+  GOOGLE_AUTHORIZATION_ENDPOINT,
+  GOOGLE_SERVICE_ACCOUNT_NOT_IMPLEMENTED,
+} from './auth/GoogleOAuth2Scopes';
+export type { GoogleServiceAccountCredentials, GoogleServiceAccountConfig } from './auth/GoogleOAuth2Scopes';
 
-const CAPABILITIES: ConnectorCapability[] = [
-  {
-    name: 'send_email',
-    method: 'execute',
-    description: 'Send an email via Gmail',
-    inputSchema: { to: 'string', subject: 'string', body: 'string' },
-    outputSchema: { messageId: 'string' },
-    requiredScopes: ['https://www.googleapis.com/auth/gmail.send'],
-  },
-  {
-    name: 'read_emails',
-    method: 'list',
-    description: 'List emails from Gmail',
-    inputSchema: { label: 'string', maxResults: 'number' },
-    outputSchema: { messages: 'array' },
-    requiredScopes: ['https://www.googleapis.com/auth/gmail.readonly'],
-  },
-  {
-    name: 'list_files',
-    method: 'list',
-    description: 'List files from Google Drive',
-    inputSchema: { query: 'string' },
-    outputSchema: { files: 'array' },
-    requiredScopes: ['https://www.googleapis.com/auth/drive.readonly'],
-  },
-  {
-    name: 'create_event',
-    method: 'create',
-    description: 'Create a Google Calendar event',
-    inputSchema: { summary: 'string', start: 'string', end: 'string' },
-    outputSchema: { eventId: 'string' },
-    requiredScopes: ['https://www.googleapis.com/auth/calendar'],
-  },
-  {
-    name: 'append_sheet_row',
-    method: 'create',
-    description: 'Append a row to a Google Sheet',
-    inputSchema: { spreadsheetId: 'string', range: 'string', values: 'array' },
-    outputSchema: { updatedCells: 'number' },
-    requiredScopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  },
-];
+export { GoogleWorkspaceConnector } from './GoogleWorkspaceConnector';
+export { GoogleWorkspaceConnectorProvider } from './GoogleWorkspaceConnectorProvider';
+export { GoogleWorkspaceConnectorProvider as GoogleWorkspaceProvider } from './GoogleWorkspaceConnectorProvider';
+export {
+  GOOGLE_CONNECTOR_ID,
+  createGoogleWorkspaceOperations,
+  registerGoogleWorkspaceOperations,
+  registerGoogleConnector,
+  GOOGLE_OPERATION_NAMES,
+} from './GoogleWorkspaceOperationsFactory';
+export type { RegisterGoogleConnectorOptions } from './GoogleWorkspaceOperationsFactory';
 
-const AUTH_REQUIREMENTS: ConnectorAuthRequirements = {
-  scheme: 'oauth2',
-  requiredFields: ['clientId', 'clientSecret'],
-  optionalFields: ['redirectUri'],
-  scopes: [
-    'https://www.googleapis.com/auth/gmail.send',
-    'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/calendar',
-    'https://www.googleapis.com/auth/spreadsheets',
-  ],
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  refreshSupported: true,
-};
+// Drive types
+export type { GoogleDriveFile, GoogleDriveOwner, GoogleDriveFolder, GoogleDriveFileResponse, GoogleDriveFileListResponse } from './drive/types/GoogleDriveTypes';
+// Drive mapper
+export { GoogleDriveMapper } from './drive/mappers/GoogleDriveMapper';
 
-class GoogleWorkspaceConnector extends BaseConnector {
-  protected async onInitialize(): Promise<void> {}
-  protected async onExecute(_capability: string, _input: Record<string, unknown>): Promise<unknown> {
-    return { placeholder: true };
-  }
-}
+// Gmail types
+export type {
+  GoogleGmailMessage,
+  GoogleGmailAttachment,
+  GoogleGmailLabel,
+  GoogleGmailMessageResponse,
+  GoogleGmailMessagePart,
+  GoogleGmailMessageListResponse,
+  GoogleGmailLabelListResponse,
+} from './gmail/types/GoogleGmailTypes';
+// Gmail mapper
+export { GoogleGmailMapper } from './gmail/mappers/GoogleGmailMapper';
 
-export class GoogleWorkspaceProvider implements ConnectorProvider {
-  readonly providerId = 'google_workspace';
+// Calendar types
+export type {
+  GoogleCalendarInfo,
+  GoogleCalendarEvent,
+  GoogleCalendarEventTime,
+  GoogleCalendarEventAttendee,
+  GoogleCalendarEventReminders,
+  GoogleFreeBusyResult,
+  GoogleFreeBusyCalendar,
+  GoogleCalendarListResponse,
+  GoogleCalendarInfoResponse,
+  GoogleCalendarEventListResponse,
+  GoogleCalendarEventResponse,
+  GoogleFreeBusyRequestResponse,
+} from './calendar/types/GoogleCalendarTypes';
+// Calendar mapper
+export { GoogleCalendarMapper } from './calendar/mappers/GoogleCalendarMapper';
 
-  createConnector(config: ConnectorProviderConfig): Connector {
-    void config;
-    return new GoogleWorkspaceConnector(METADATA, CAPABILITIES, AUTH_REQUIREMENTS);
-  }
+// Pagination types
+export type { GooglePageResult, GooglePaginationConfig } from './types/GooglePagination';
+export { DEFAULT_GOOGLE_PAGINATION_CONFIG } from './types/GooglePagination';
 
-  getMetadata(): ConnectorMetadata {
-    return METADATA;
-  }
+// Drive operation input/output types
+export type { ListFilesInput, ListFilesOutput } from './drive/operations/ListFilesOperation';
+export type { GetFileInput, GetFileOutput } from './drive/operations/GetFileOperation';
+export type { SearchFilesInput, SearchFilesOutput } from './drive/operations/SearchFilesOperation';
+export type { CreateFolderInput, CreateFolderOutput } from './drive/operations/CreateFolderOperation';
+export type { UploadFileInput, UploadFileOutput } from './drive/operations/UploadFileOperation';
+export type { UpdateFileMetadataInput, UpdateFileMetadataOutput } from './drive/operations/UpdateFileMetadataOperation';
 
-  getCapabilities(): ConnectorCapability[] {
-    return CAPABILITIES;
-  }
+// Gmail operation input/output types
+export type { ListMessagesInput, ListMessagesOutput } from './gmail/operations/ListMessagesOperation';
+export type { GetMessageInput, GetMessageOutput } from './gmail/operations/GetMessageOperation';
+export type { ListLabelsInput, ListLabelsOutput } from './gmail/operations/ListLabelsOperation';
+export type { SendMessageInput, SendMessageOutput } from './gmail/operations/SendMessageOperation';
+export type { CreateDraftInput, CreateDraftOutput } from './gmail/operations/CreateDraftOperation';
 
-  getAuthRequirements(): ConnectorAuthRequirements {
-    return AUTH_REQUIREMENTS;
-  }
-}
+// Calendar operation input/output types
+export type { ListCalendarsInput, ListCalendarsOutput } from './calendar/operations/ListCalendarsOperation';
+export type { GetCalendarInput, GetCalendarOutput } from './calendar/operations/GetCalendarOperation';
+export type { ListEventsInput, ListEventsOutput } from './calendar/operations/ListEventsOperation';
+export type { GetEventInput, GetEventOutput } from './calendar/operations/GetEventOperation';
+export type { CreateEventInput, CreateEventOutput } from './calendar/operations/CreateEventOperation';
+export type { UpdateEventInput, UpdateEventOutput } from './calendar/operations/UpdateEventOperation';
+export type { QueryFreeBusyInput, QueryFreeBusyOutput } from './calendar/operations/QueryFreeBusyOperation';
