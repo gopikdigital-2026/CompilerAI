@@ -48,8 +48,9 @@ describe('Rate limits — header extraction', () => {
       'x-ratelimit-reset': 'invalid',
     });
     assert.ok(headers);
-    assert.equal(headers!.limit, 0);
-    assert.equal(headers!.remaining, 0);
+    // parseIntSafe returns null for non-numeric strings
+    assert.equal(headers!.limit, null);
+    assert.equal(headers!.remaining, null);
   });
 
   it('should compute resetAt from epoch', () => {

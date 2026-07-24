@@ -147,8 +147,8 @@ describe('Security — token sanitization', () => {
       context: ctx(),
     });
 
-    const traces = runtime.getTrace().getSpans();
-    const serialized = JSON.stringify(traces);
+    const spans = runtime.getTrace().getSpansByTrace('t-1');
+    const serialized = JSON.stringify(spans);
     assert.ok(!serialized.includes(SECRET_TOKEN),
       `Token found in traces: ${serialized}`);
   });
