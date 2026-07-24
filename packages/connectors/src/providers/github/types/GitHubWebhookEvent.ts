@@ -29,4 +29,6 @@ export const SUPPORTED_WEBHOOK_EVENTS: readonly string[] = [
   'workflow_run',
   'workflow_dispatch',
   'repository',
+  'installation',
+  'installation_repositories',
 ];

@@ -1,4 +1,4 @@
-# VALIDATION_REPORT.md — Sprint 24.1
+# VALIDATION_REPORT.md — Sprint 25
 
 ## Environment
 
@@ -38,9 +38,9 @@ Command: `node --test --import tsx tests/**/*.test.ts`
 Result: Success (exit 0)
 
 ```
-# tests 189
-# suites 40
-# pass 189
+# tests 240
+# suites 55
+# pass 240
 # fail 0
 # cancelled 0
 # skipped 0
@@ -53,23 +53,14 @@ Command: `node --test --import tsx --experimental-test-coverage tests/**/*.test.
 Result: Success (exit 0)
 
 ```
-all files | 90.84% statements | 86.68% branches | 82.46% functions
+all files | 89.14% statements | 87.59% branches | 81.98% functions
 ```
-
-Per-file highlights:
-- GitHubPagination: 100%
-- GitHubWebhookVerifier: 100%
-- GitHubRateLimitMapper: 100%
-- GitHubErrorMapper: 100%
-- ConnectorRuntime: 96.62%
-- RetryPolicy: 100%
-- sanitize.ts: 100%
 
 ### 7. `npm run build`
 
 Command: `rm -rf dist && tsc -p tsconfig.json`
 Result: Success (exit 0)
-Output: 84 `.d.ts` declaration files generated
+Output: 104 `.d.ts` declaration files generated
 No tests, fixtures, or docs included in output
 
 ## Stability Check (Second Run)
@@ -77,75 +68,70 @@ No tests, fixtures, or docs included in output
 ### `npm test` (second run)
 
 ```
-# tests 189
-# pass 189
+# tests 240
+# pass 240
 # fail 0
 ```
 
 ### `npm run build` (second run)
 
-Result: Success. 84 `.d.ts` files. Identical output.
+Result: Success. 104 `.d.ts` files. Identical output.
 
-## Fixes Applied
+## Sprint 25 — New Components
 
-1. **package.json**: Declared all direct devDependencies explicitly (`typescript`,
-   `tsx`, `eslint`, `@eslint/js`, `typescript-eslint`, `globals`). Added scripts:
-   `typecheck`, `lint`, `test`, `test:coverage`, `build`.
+### GitHub App Authentication
+- `GitHubAppJwtProvider` — RS256 JWT generation with injectable clock
+- `GitHubInstallationTokenProvider` — Token exchange with single-flight refresh
+- `GitHubInstallationTokenCache` — Per-org/installation token caching
+- `GitHubAppCredentialResolver` — Credential resolution from CredentialStore
 
-2. **tsconfig.json**: Strict mode enabled. Excludes tests, fixtures, docs from
-   build. Generates `.d.ts` declarations.
+### Sync Engine
+- `GitHubSyncEngine` — Incremental/full sync with checkpoints and cancellation
+- `GitHubSyncScheduler` — Periodic sync scheduling
+- `GitHubSyncCheckpointStore` + in-memory impl — Resumable sync state
+- `GitHubSyncRepository` — Store interfaces for repos/issues/PRs/workflow runs
+- In-memory sync stores with idempotent upsert
 
-3. **eslint.config.js**: Spread `js.configs.recommended` and
-   `tseslint.configs.recommended`. Added rules: no-explicit-any, no-unused-vars,
-   no-console, prefer-const, eqeqeq.
+### Webhook Receiver Core
+- `GitHubWebhookReceiver` — Framework-agnostic receive pipeline
+- `GitHubWebhookHandlerRegistry` — Handler registration and dispatch
+- `GitHubWebhookDispatcher` — Event dispatch with metadata sanitization
+- `InMemoryGitHubWebhookDeliveryStore` — Delivery deduplication
+- 9 event handlers (installation, installation_repositories, repository, issues,
+  issue_comment, pull_request, push, workflow_run, workflow_dispatch)
 
-4. **RetryPolicy.ts**: Fixed retry logic — non-idempotent operations are never
-   retried regardless of error code. Previously, `PROVIDER_ERROR` would trigger
-   retry even for non-idempotent ops.
+### Job Queue
+- `InMemoryGitHubSyncJobRepository` — Priority queue with deduplication
+- `GitHubSyncWorker` — Job processing with retry, backoff, dead-letter
+- `createSyncJob` — Job factory function
 
-5. **sanitize.ts**: Added `x-hub-signature-256` and `x-hub-signature` to
-   `SECRET_KEYS` set for webhook signature redaction.
+### Observability Events
+All 10 event types implemented:
+- `connector.github.app.token.created`
+- `connector.github.app.token.refreshed`
+- `connector.github.webhook.received`
+- `connector.github.webhook.duplicate`
+- `connector.github.webhook.processed`
+- `connector.github.sync.started`
+- `connector.github.sync.checkpoint`
+- `connector.github.sync.completed`
+- `connector.github.sync.failed`
+- `connector.github.sync.resumed`
 
-6. **BaseConnector.ts**: Marked `execute()` as `@deprecated`.
+## New Test Files
 
-7. **GitHubConnector.ts**: Marked `onExecute()` as `@deprecated`.
-
-8. **GitHubOperationsFactory.ts**: Added `registerGitHubConnector()` function
-   with duplicate detection and injectable transport. Exported from package root.
-
-9. **Test files**: Removed unused imports. Fixed test expectations to match
-   actual API behavior (trace API uses `getSpansByTrace`, not `getSpans`;
-   `parseIntSafe` returns `null` for invalid values; pagination `maxItems`
-   check happens after yield).
-
-10. **New test files added**:
-    - `registration.test.ts` — package exports, no side effects, isolated runtimes
-    - `security-sanitization.test.ts` — token sanitization across all observability layers
-    - `non-idempotent.test.ts` — verifies non-idempotent ops are not retried
-    - `pagination.test.ts` — Link header parsing, iteratePages edge cases
-    - `rate-limits-extended.test.ts` — header extraction, error mapping, sanitization
-    - `webhooks-extended.test.ts` — HMAC verification, negative cases, parsing edge cases
-
-## Architecture
-
-```
-Application
-  ↓
-ConnectorRuntime.execute()
-  ↓
-Registered GitHub Operation (11 operations)
-  ↓
-CredentialResolver → GitHubTokenAuthAdapter
-  ↓
-Resilience Pipeline (retry, timeout, rate limit, circuit breaker)
-  ↓
-GitHubApiClient (injectable transport)
-  ↓
-Normalized Result
-```
+| File | Tests | Coverage |
+|------|-------|----------|
+| `app-jwt.test.ts` | 10 | JWT generation, RS256, TTL, expiry, custom clock |
+| `app-token.test.ts` | 7 | Token exchange, caching, refresh, single-flight, errors |
+| `sync-stores.test.ts` | 9 | Idempotent upsert, skip-unchanged, isolation, checkpoints |
+| `webhook-receiver.test.ts` | 10 | Valid/invalid delivery, duplicate detection, handlers, secret leak |
+| `job-queue.test.ts` | 7 | Priority, dedup, dead-letter, defaults |
 
 ## Known Limitations
 
-- GitHub App authentication: not implemented (Sprint 25)
-- Webhook HTTP receiver: not implemented (Sprint 25)
-- Incremental sync: not implemented (Sprint 25)
+- No HTTP server for webhook receiver (core only)
+- In-memory stores only (no Supabase/Redis yet)
+- No GitHub App setup UI
+- No incremental sync triggered by push events
+- Job queue not persistent across restarts

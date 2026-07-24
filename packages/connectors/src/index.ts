@@ -180,6 +180,62 @@ export { GitHubWebhookVerifier } from './providers/github';
 export type { WebhookVerificationResult } from './providers/github';
 export { GitHubWebhookParser } from './providers/github';
 export { GitHubWebhookEventMapper } from './providers/github';
+
+// Sprint 25: GitHub App Authentication
+export { GitHubAppJwtProvider, SystemClock } from './providers/github';
+export type { GitHubAppJwtResult, Clock } from './providers/github';
+export { GitHubInstallationTokenCache } from './providers/github';
+export type { IGitHubInstallationTokenCache, InstallationTokenKey, CachedTokenEntry } from './providers/github';
+export { GitHubInstallationTokenProvider } from './providers/github';
+export type { GitHubInstallationTokenProviderOptions } from './providers/github';
+export { GitHubAppCredentialResolver } from './providers/github';
+
+// Sprint 25: Sync Engine
+export type {
+  GitHubSyncResourceType, GitHubSyncState, GitHubSyncMode, GitHubSyncCheckpoint,
+  GitHubSyncResult, GitHubSyncProgress, GitHubSyncRequest,
+} from './providers/github';
+export { createSyncId } from './providers/github';
+export type { GitHubSyncJobRecord } from './providers/github';
+export { createSyncJobDedupKey, createJobId } from './providers/github';
+export type { IGitHubSyncCheckpointStore } from './providers/github';
+export { InMemoryGitHubSyncCheckpointStore } from './providers/github';
+export type {
+  IGitHubRepositorySyncStore, IGitHubIssueSyncStore, IGitHubPullRequestSyncStore,
+  IGitHubWorkflowRunSyncStore, GitHubSyncStore, UpsertResult,
+} from './providers/github';
+export {
+  InMemoryRepositorySyncStore, InMemoryIssueSyncStore, InMemoryPullRequestSyncStore, InMemoryWorkflowRunSyncStore,
+} from './providers/github';
+export { GitHubSyncEngine } from './providers/github';
+export type { GitHubSyncEngineOptions } from './providers/github';
+export { GitHubSyncScheduler } from './providers/github';
+export type { GitHubSyncSchedulerOptions, ScheduledSyncConfig } from './providers/github';
+export { InMemoryGitHubSyncJobRepository, createSyncJob } from './providers/github';
+export type { GitHubSyncJobRepository } from './providers/github';
+export { GitHubSyncWorker } from './providers/github';
+export type { GitHubSyncWorkerOptions } from './providers/github';
+
+// Sprint 25: Webhook Receiver Core
+export type {
+  GitHubWebhookEnvelope, WebhookReceiveInput, WebhookReceiveResult,
+  WebhookProcessResult, WebhookDeliveryRecord,
+} from './providers/github';
+export type { IGitHubWebhookDeliveryStore } from './providers/github';
+export { InMemoryGitHubWebhookDeliveryStore } from './providers/github';
+export { GitHubWebhookHandlerRegistry } from './providers/github';
+export type { GitHubWebhookHandler } from './providers/github';
+export { GitHubWebhookDispatcher } from './providers/github';
+export type { WebhookDispatchResult } from './providers/github';
+export { GitHubWebhookReceiver } from './providers/github';
+export type { GitHubWebhookReceiverOptions } from './providers/github';
+export {
+  createAllWebhookHandlers, createInstallationHandler, createInstallationRepositoriesHandler,
+  createRepositoryHandler, createIssuesHandler, createIssueCommentHandler,
+  createPullRequestHandler, createPushHandler, createWorkflowRunHandler, createWorkflowDispatchHandler,
+  ALL_SUPPORTED_WEBHOOK_EVENTS,
+} from './providers/github';
+export type { GitHubWebhookHandlerOptions } from './providers/github';
 export type { GitHubUser, GitHubUserResponse } from './providers/github';
 export type { GitHubRepository, GitHubRepositoryOwner, GitHubRepositoryResponse } from './providers/github';
 export type { GitHubIssue, GitHubIssueLabel, GitHubIssueUser, GitHubIssueMilestone, GitHubIssueResponse } from './providers/github';
