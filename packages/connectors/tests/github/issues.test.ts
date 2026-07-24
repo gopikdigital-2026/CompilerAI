@@ -12,7 +12,6 @@ import {
   FIXTURE_ISSUE,
   FIXTURE_ISSUES_LIST,
   FIXTURE_ISSUE_COMMENT_RESPONSE,
-  FIXTURE_USER,
   createMockFetch,
   createRateLimitHeaders,
 } from './fixtures';

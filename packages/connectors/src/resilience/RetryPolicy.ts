@@ -8,21 +8,21 @@ export interface RetryPolicyConfig {
   nonRetryableErrorCodes: string[];
 }
 
+export interface RetryDecision {
+  shouldRetry: boolean;
+  delayMs: number;
+  attempt: number;
+}
+
 export const DEFAULT_RETRY_CONFIG: RetryPolicyConfig = {
   maxAttempts: 3,
-  initialDelayMs: 250,
+  initialDelayMs: 100,
   maxDelayMs: 5000,
   backoffMultiplier: 2,
   jitter: true,
   retryableErrorCodes: ['NETWORK_ERROR', 'PROVIDER_ERROR', 'RATE_LIMIT_ERROR'],
   nonRetryableErrorCodes: ['VALIDATION_ERROR', 'AUTHENTICATION_ERROR', 'AUTHORIZATION_ERROR', 'CANCELLED_ERROR'],
 };
-
-export interface RetryDecision {
-  shouldRetry: boolean;
-  delayMs: number;
-  attempt: number;
-}
 
 export class RetryPolicy {
   private readonly config: RetryPolicyConfig;
@@ -37,8 +37,12 @@ export class RetryPolicy {
       return { shouldRetry: false, delayMs: 0, attempt };
     }
 
+    if (!isIdempotent) {
+      return { shouldRetry: false, delayMs: 0, attempt };
+    }
+
     const retryable = this.config.retryableErrorCodes.includes(errorCode);
-    if (!retryable && !isIdempotent) {
+    if (!retryable) {
       return { shouldRetry: false, delayMs: 0, attempt };
     }
 
@@ -63,10 +67,7 @@ export class RetryPolicy {
   }
 
   applyRetryAfter(retryAfterMs: number, attempt: number): number {
-    return Math.min(retryAfterMs, this.config.maxDelayMs) || this.computeDelay(attempt);
-  }
-
-  get maxAttempts(): number {
-    return this.config.maxAttempts;
+    const computed = this.computeDelay(attempt);
+    return Math.max(computed, retryAfterMs);
   }
 }

@@ -23,8 +23,10 @@ export {
   GITHUB_CONNECTOR_ID,
   createGitHubOperations,
   registerGitHubOperations,
+  registerGitHubConnector,
   GITHUB_OPERATION_NAMES,
 } from './GitHubOperationsFactory';
+export type { RegisterGitHubConnectorOptions } from './GitHubOperationsFactory';
 
 export { GitHubWebhookVerifier } from './webhooks/GitHubWebhookVerifier';
 export type { WebhookVerificationResult } from './webhooks/GitHubWebhookVerifier';

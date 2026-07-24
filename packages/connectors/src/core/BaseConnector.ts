@@ -48,6 +48,12 @@ export abstract class BaseConnector implements Connector {
     return this.status;
   }
 
+  /**
+   * @deprecated Use ConnectorRuntime.execute() instead.
+   * This method bypasses the runtime pipeline (retry, timeout, rate limiting,
+   * circuit breaker, telemetry, audit). It is retained for backward compatibility
+   * only and delegates no resilience logic.
+   */
   async execute(capability: string, input: Record<string, unknown>, context: ConnectorContext): Promise<ConnectorResult> {
     if (!this.isInitialized()) {
       return this.fail('CONNECTOR_NOT_INITIALIZED', 'Connector has not been initialized', 'auth');

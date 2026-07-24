@@ -50,6 +50,11 @@ export class GitHubConnector extends BaseConnector {
     // Token is resolved through the auth adapter at execution time
   }
 
+  /**
+   * @deprecated Use ConnectorRuntime.execute() with registered GitHub operations.
+   * This method provides a parallel HTTP execution path that bypasses the
+   * runtime pipeline (retry, timeout, rate limiting, circuit breaker, telemetry).
+   */
   protected async onExecute(
     capability: string,
     _input: Record<string, unknown>,

@@ -172,8 +172,10 @@ export {
   GITHUB_CONNECTOR_ID,
   createGitHubOperations,
   registerGitHubOperations,
+  registerGitHubConnector,
   GITHUB_OPERATION_NAMES,
 } from './providers/github';
+export type { RegisterGitHubConnectorOptions } from './providers/github';
 export { GitHubWebhookVerifier } from './providers/github';
 export type { WebhookVerificationResult } from './providers/github';
 export { GitHubWebhookParser } from './providers/github';

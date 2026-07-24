@@ -1,7 +1,10 @@
 import type { ConnectorRuntime } from '../../runtime/ConnectorRuntime';
-import type { GitHubApiClient } from './GitHubApiClient';
-import type { GitHubTokenAuthAdapter } from './auth/GitHubTokenAuthAdapter';
 import type { ConnectorOperation } from '../../runtime/ConnectorExecutionResult';
+import type { CredentialResolver } from '../../credentials/CredentialResolver';
+import type { ConnectorTelemetry } from '../../observability/ConnectorTelemetry';
+import type { GitHubApiClientConfig } from './GitHubApiClient';
+import { GitHubApiClient, DEFAULT_GITHUB_CONFIG } from './GitHubApiClient';
+import { GitHubTokenAuthAdapter } from './auth/GitHubTokenAuthAdapter';
 import { createGetAuthenticatedUserOperation } from './operations/GetAuthenticatedUserOperation';
 import { createListRepositoriesOperation } from './operations/ListRepositoriesOperation';
 import { createGetRepositoryOperation } from './operations/GetRepositoryOperation';
@@ -15,6 +18,16 @@ import { createListWorkflowRunsOperation } from './operations/ListWorkflowRunsOp
 import { createTriggerWorkflowDispatchOperation } from './operations/TriggerWorkflowDispatchOperation';
 
 export const GITHUB_CONNECTOR_ID = 'github' as const;
+
+export interface RegisterGitHubConnectorOptions {
+  runtime: ConnectorRuntime;
+  credentialResolver: CredentialResolver;
+  apiClientConfig?: GitHubApiClientConfig;
+  transport?: FetchLike;
+  telemetry?: ConnectorTelemetry;
+}
+
+export type FetchLike = typeof fetch;
 
 export function createGitHubOperations(
   client: GitHubApiClient,
@@ -43,6 +56,30 @@ export function registerGitHubOperations(
   for (const op of createGitHubOperations(client, authAdapter)) {
     runtime.registerOperation(GITHUB_CONNECTOR_ID, op);
   }
+}
+
+export function registerGitHubConnector(options: RegisterGitHubConnectorOptions): {
+  client: GitHubApiClient;
+  authAdapter: GitHubTokenAuthAdapter;
+} {
+  const client = new GitHubApiClient(
+    options.apiClientConfig ?? DEFAULT_GITHUB_CONFIG,
+    options.transport,
+  );
+  const authAdapter = new GitHubTokenAuthAdapter(options.credentialResolver);
+
+  for (const op of createGitHubOperations(client, authAdapter)) {
+    if (runtime_hasOperation(options.runtime, op.name)) {
+      throw new Error(`Duplicate operation registration: ${op.name}`);
+    }
+    options.runtime.registerOperation(GITHUB_CONNECTOR_ID, op);
+  }
+
+  return { client, authAdapter };
+}
+
+function runtime_hasOperation(runtime: ConnectorRuntime, operationName: string): boolean {
+  return runtime.hasOperation(GITHUB_CONNECTOR_ID, operationName);
 }
 
 export const GITHUB_OPERATION_NAMES: readonly string[] = [

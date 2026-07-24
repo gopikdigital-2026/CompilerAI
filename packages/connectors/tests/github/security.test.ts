@@ -6,7 +6,7 @@ import {
   sanitizeMetadata,
   ALLOWED_HOSTS,
 } from '../../src/index';
-import { createMockFetch, createRateLimitHeaders } from './fixtures';
+import { createMockFetch } from './fixtures';
 
 const VALID_TOKEN = 'ghp_test_token_not_real';
 

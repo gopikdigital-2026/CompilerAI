@@ -7,7 +7,6 @@ import {
   GitHubApiClient,
   GitHubTokenAuthAdapter,
   ConnectorAuthenticationError,
-  createExecutionContext,
 } from '../../src/index';
 import { FIXTURE_USER, createMockFetch, createRateLimitHeaders } from './fixtures';
 
@@ -44,7 +43,7 @@ describe('GitHub Authentication', () => {
   });
 
   it('should apply token correctly in Authorization header', async () => {
-    const { resolver, authAdapter } = setup({ accessToken: VALID_TOKEN });
+    const { authAdapter } = setup({ accessToken: VALID_TOKEN });
     const client = new GitHubApiClient({}, mockFetch);
 
     const token = await authAdapter.getToken('org-1');
@@ -63,7 +62,7 @@ describe('GitHub Authentication', () => {
   });
 
   it('should throw when token is empty', async () => {
-    const { resolver, authAdapter } = setup({ accessToken: '' });
+    const { authAdapter } = setup({ accessToken: '' });
     await assert.rejects(
       authAdapter.getToken('org-1'),
       (e: unknown) => e instanceof ConnectorAuthenticationError,

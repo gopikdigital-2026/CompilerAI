@@ -9,6 +9,7 @@ const SECRET_KEYS = new Set([
   'bearer',
   'credential', 'credentials',
   'privatekey', 'private_key', 'private-key',
+  'x-hub-signature-256', 'x-hub-signature',
 ]);
 
 const SECRET_PATTERNS = [

@@ -8,11 +8,9 @@ import {
   CredentialResolver,
 } from '../../src/index';
 import {
-  FIXTURE_USER,
   FIXTURE_REPOSITORY,
   FIXTURE_REPOSITORIES_LIST,
   FIXTURE_LINK_HEADER_PAGE1,
-  FIXTURE_LINK_HEADER_PAGE2,
   createMockFetch,
   createRateLimitHeaders,
 } from './fixtures';
