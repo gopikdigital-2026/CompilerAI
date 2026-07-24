@@ -28,7 +28,7 @@ export {
   ConnectorAlreadyRegisteredError,
   ConnectorNotFoundError,
   ConnectorValidationError,
-  ConnectorAuthenticationError,
+  ConnectorAuthenticationError as CoreConnectorAuthenticationError,
   ConnectorCapabilityError,
 } from './core/ConnectorErrors';
 
@@ -68,7 +68,7 @@ export {
 export { Microsoft365Provider } from './providers/microsoft365';
 export { GoogleWorkspaceProvider } from './providers/google';
 export { SlackProvider } from './providers/slack';
-export { GitHubProvider } from './providers/github';
+export { GitHubConnectorProvider } from './providers/github';
 export { JiraProvider } from './providers/jira';
 export { NotionProvider } from './providers/notion';
 export { SalesforceProvider } from './providers/salesforce';
@@ -85,12 +85,12 @@ export type { TestConnectorId } from './providers/test';
 // Runtime errors
 export { ConnectorRuntimeError } from './errors/ConnectorRuntimeError';
 export type { ConnectorErrorCode, SanitizedDetails } from './errors/ConnectorRuntimeError';
-export { ConnectorAuthenticationError as ConnectorRuntimeAuthError, ConnectorAuthenticationError as RuntimeAuthError } from './errors/ConnectorAuthenticationError';
-export { ConnectorRateLimitError as ConnectorRuntimeRateLimitError, ConnectorRateLimitError as RuntimeRateLimitError } from './errors/ConnectorRateLimitError';
+export { ConnectorAuthenticationError } from './errors/ConnectorAuthenticationError';
+export { ConnectorRateLimitError } from './errors/ConnectorRateLimitError';
 export type { RateLimitDetails } from './errors/ConnectorRateLimitError';
-export { ConnectorTimeoutError as ConnectorRuntimeTimeoutError, ConnectorTimeoutError as RuntimeTimeoutError } from './errors/ConnectorTimeoutError';
-export { ConnectorCircuitOpenError as ConnectorRuntimeCircuitOpenError, ConnectorCircuitOpenError as RuntimeCircuitOpenError } from './errors/ConnectorCircuitOpenError';
+export { ConnectorTimeoutError } from './errors/ConnectorTimeoutError';
 export type { CircuitOpenDetails } from './errors/ConnectorCircuitOpenError';
+export { ConnectorCircuitOpenError } from './errors/ConnectorCircuitOpenError';
 
 // Credentials
 export type { ICredentialStore as IRuntimeCredentialStore, CredentialRecord, SaveCredentialRequest, CredentialType } from './credentials/CredentialStore';
@@ -148,3 +148,42 @@ export type { IOperationRegistry } from './runtime/ConnectorOperationExecutor';
 export { ConnectorExecutionPipeline } from './runtime/ConnectorExecutionPipeline';
 export type { PipelineConfig } from './runtime/ConnectorExecutionPipeline';
 export { DEFAULT_PIPELINE_CONFIG } from './runtime/ConnectorExecutionPipeline';
+
+// GitHub connector
+export { GitHubApiClient, DEFAULT_GITHUB_CONFIG } from './providers/github';
+export type { GitHubApiClientConfig, GitHubResponse, GitHubRequestOptions, FetchLike } from './providers/github';
+export { GitHubRequestBuilder, ALLOWED_HOSTS } from './providers/github';
+export { GitHubErrorMapper } from './providers/github';
+export { GitHubRateLimitMapper } from './providers/github';
+export type { GitHubRateLimitHeaders } from './providers/github';
+export { GitHubResponseMapper } from './providers/github';
+export { GitHubPagination } from './providers/github';
+export { GitHubTokenAuthAdapter } from './providers/github';
+export type {
+  GitHubAppCredentials,
+  GitHubAppJwtClaims,
+  GitHubAppInstallationToken,
+  IGitHubAppAuthProvider,
+  GitHubAppAuthConfig,
+} from './providers/github';
+export { GITHUB_APP_AUTH_NOT_IMPLEMENTED } from './providers/github';
+export { GitHubConnector } from './providers/github';
+export {
+  GITHUB_CONNECTOR_ID,
+  createGitHubOperations,
+  registerGitHubOperations,
+  GITHUB_OPERATION_NAMES,
+} from './providers/github';
+export { GitHubWebhookVerifier } from './providers/github';
+export type { WebhookVerificationResult } from './providers/github';
+export { GitHubWebhookParser } from './providers/github';
+export { GitHubWebhookEventMapper } from './providers/github';
+export type { GitHubUser, GitHubUserResponse } from './providers/github';
+export type { GitHubRepository, GitHubRepositoryOwner, GitHubRepositoryResponse } from './providers/github';
+export type { GitHubIssue, GitHubIssueLabel, GitHubIssueUser, GitHubIssueMilestone, GitHubIssueResponse } from './providers/github';
+export type { GitHubPullRequest, GitHubPullRequestUser, GitHubPullRequestBranch, GitHubPullRequestResponse } from './providers/github';
+export type { GitHubWorkflowRun, GitHubWorkflowRunUser, GitHubWorkflowRunResponse, GitHubWorkflowRunsListResponse } from './providers/github';
+export type { GitHubPaginationResult, GitHubPaginationLinks, GitHubPaginationConfig } from './providers/github';
+export { DEFAULT_PAGINATION_CONFIG } from './providers/github';
+export type { GitHubWebhookEvent, GitHubWebhookHeaders } from './providers/github';
+export { SUPPORTED_WEBHOOK_EVENTS } from './providers/github';
