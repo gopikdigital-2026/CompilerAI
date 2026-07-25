@@ -163,3 +163,52 @@ export type {
   IChangeHistoryRepository,
 } from './repositories/RepositoryInterfaces';
 export { InMemoryAutomationStudioRepository } from './repositories/InMemoryRepository';
+
+// Sprint 28 — Canvas
+export { CanvasViewport } from './canvas/CanvasViewport';
+export type { ViewportState, BoundingBox, VisibleNodesResult } from './canvas/CanvasViewport';
+export { CanvasSelection } from './canvas/CanvasSelection';
+export type { SelectionBox } from './canvas/CanvasSelection';
+export { MiniMap } from './canvas/MiniMap';
+export type { MiniMapData, MiniMapNode } from './canvas/MiniMap';
+export { AutoLayout } from './canvas/AutoLayout';
+export type { LayoutNode, LayoutResult } from './canvas/AutoLayout';
+export { CanvasPerformance } from './canvas/CanvasPerformance';
+export type { PerformanceMetrics } from './canvas/CanvasPerformance';
+
+// Sprint 28 — Node Library
+export { ConnectorNodeLibrary } from './node-library/ConnectorNodeLibrary';
+export type { ConnectorNodeDescriptor, IConnectorNodeSource } from './node-library/ConnectorNodeLibrary';
+
+// Sprint 28 — Inspector
+export { PropertyInspector } from './inspector/PropertyInspector';
+export type { InspectorField, InspectorSection, InspectionResult } from './inspector/PropertyInspector';
+export { ValidationFeedback } from './inspector/ValidationFeedback';
+export type { ValidationFeedbackItem, ValidationLevel, ValidationCategory } from './inspector/ValidationFeedback';
+
+// Sprint 28 — Simulation
+export { VisualSimulation } from './simulation/VisualSimulation';
+export type {
+  VisualSimulationResult,
+  VisualSimulationNode,
+  VisualSimulationEdge,
+  SimulationStep,
+  SimulationNodeState,
+  SimulationHighlight,
+} from './simulation/VisualSimulation';
+
+// Sprint 28 — Versioning
+export { VersionManager } from './versioning/VersionManager';
+export type { VersionDiff, VersionTag, VersionHistoryEntry } from './versioning/VersionManager';
+
+// Sprint 28 — Deployment
+export { DeploymentManager } from './deployment/DeploymentManager';
+export type { DeploymentInfo, DeploymentResult, DeploymentStatus } from './deployment/DeploymentManager';
+
+// Sprint 28 — Telemetry
+export { InMemoryStudioTelemetry } from './telemetry/StudioTelemetry';
+export type { StudioEvent, IStudioTelemetry, StudioEventType } from './telemetry/StudioTelemetry';
+
+// Sprint 28 — API
+export { StudioApi } from './api/StudioApi';
+export type { StudioApiDeps, CopilotWorkflowImport, CopilotWorkflowExport } from './api/StudioApi';
