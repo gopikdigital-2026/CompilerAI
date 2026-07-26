@@ -17,7 +17,8 @@
     "packages/multi-agent",
     "packages/sdk-typescript",
     "packages/security-governance",
-    "packages/skills-marketplace"
+    "packages/skills-marketplace",
+    "packages/observability"
   ],
   "scripts": {
     "dev": "vite",
