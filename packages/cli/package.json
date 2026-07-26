@@ -13,7 +13,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "test": "node --test --import tsx --test-reporter spec tests/**/*.test.ts",
+    "test": "node --test --import tsx tests/**/*.test.ts",
     "cli": "tsx src/cli.ts"
   },
   "dependencies": {

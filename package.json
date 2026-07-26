@@ -33,9 +33,16 @@
     "lint:packages": "node scripts/lint-all.mjs",
     "test:packages": "node scripts/test-all.mjs",
     "audit:deps": "node scripts/audit-deps.mjs",
+    "audit:security": "node scripts/audit-security.mjs",
+    "audit:complexity": "node scripts/audit-complexity.mjs",
     "quality:gates": "node scripts/quality-gates.mjs",
+    "enterprise:validate": "node scripts/enterprise-validate.mjs",
+    "test:integration": "node --test --import tsx tests/e2e/enterprise-platform-flow.test.ts",
+    "test:e2e": "node --test --import tsx tests/e2e/enterprise-platform-flow.test.ts",
+    "test:coverage": "node --test --import tsx --experimental-test-coverage tests/**/*.test.ts",
+    "report:release-readiness": "node scripts/enterprise-validate.mjs",
     "validate": "node scripts/validate.mjs",
-    "rc1:validate": "node scripts/quality-gates.mjs"
+    "rc1:validate": "node scripts/enterprise-validate.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

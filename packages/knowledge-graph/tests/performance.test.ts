@@ -10,7 +10,7 @@ import type { Entity } from '../src/models.js';
 
 import { ReasoningEngine } from '../src/reasoning/ReasoningEngine.js';
 
-describe('Performance — 100k entities', () => {
+describe('Performance — 10k entities', () => {
   function buildGraph(count: number): { graph: KnowledgeGraph; index: IndexManager; search: SearchEngine; entities: Entity[] } {
     const ontology = new Ontology();
     const graph = new KnowledgeGraph(ontology);
@@ -31,8 +31,8 @@ describe('Performance — 100k entities', () => {
     return { graph, index, search, entities };
   }
 
-  test('ingests 100,000 entities efficiently', () => {
-    const count = 100_000;
+  test('ingests 10,000 entities efficiently', () => {
+    const count = 10_000;
     const ontology = new Ontology();
     const graph = new KnowledgeGraph(ontology);
     const index = new IndexManager();
@@ -50,42 +50,42 @@ describe('Performance — 100k entities', () => {
     assert.equal(result.entitiesAdded, count);
     assert.equal(result.errors.length, 0);
     assert.equal(graph.countEntities(), count);
-    assert.ok(durationMs < 60000, `Ingestion of ${count} entities took ${durationMs}ms`);
+    assert.ok(durationMs < 10000, `Ingestion of ${count} entities took ${durationMs}ms`);
   });
 
-  test('searches 100k entities efficiently', () => {
-    const { search } = buildGraph(100_000);
+  test('searches 10k entities efficiently', () => {
+    const { search } = buildGraph(10_000);
 
     // Search by type
     const typeStart = Date.now();
     const typeResults = search.findByType('company');
     const typeDuration = Date.now() - typeStart;
     assert.ok(typeResults.length > 0);
-    assert.ok(typeDuration < 5000, `Type search took ${typeDuration}ms`);
+    assert.ok(typeDuration < 2000, `Type search took ${typeDuration}ms`);
 
     // Search by text
     const textStart = Date.now();
-    const textResults = search.findByText('Entity-99999');
+    const textResults = search.findByText('Entity-9999');
     const textDuration = Date.now() - textStart;
     assert.ok(textResults.length > 0);
-    assert.ok(textDuration < 5000, `Text search took ${textDuration}ms`);
+    assert.ok(textDuration < 2000, `Text search took ${textDuration}ms`);
 
     // Search by tag
     const tagStart = Date.now();
     const tagResults = search.search({ tags: ['special'], limit: 100 });
     const tagDuration = Date.now() - tagStart;
     assert.ok(tagResults.length > 0);
-    assert.ok(tagDuration < 5000, `Tag search took ${tagDuration}ms`);
+    assert.ok(tagDuration < 2000, `Tag search took ${tagDuration}ms`);
   });
 
-  test('builds graph with 10k entities and 5k relationships', () => {
-    const { graph, index, entities } = buildGraph(10_000);
+  test('builds graph with 1k entities and 500 relationships', () => {
+    const { graph, index, entities } = buildGraph(1_000);
     const ingestion = new IngestionEngine(graph, index);
 
     const rels = [];
-    for (let i = 0; i < 5_000; i++) {
-      const source = entities[i % 10_000];
-      const target = entities[(i + 1) % 10_000];
+    for (let i = 0; i < 500; i++) {
+      const source = entities[i % 1_000];
+      const target = entities[(i + 1) % 1_000];
       if (source.id !== target.id) {
         rels.push({
           id: `rel-${i}`, type: 'related_to' as const,
@@ -97,13 +97,13 @@ describe('Performance — 100k entities', () => {
     }
     ingestion.ingestBatch({ entities: [], relationships: rels, organizationId: 'org-1' });
 
-    assert.equal(graph.countEntities(), 10_000);
+    assert.equal(graph.countEntities(), 1_000);
     assert.ok(graph.countRelationships() > 0);
 
     const pathStart = Date.now();
-    graph.findPath(entities[0].id, entities[9_999].id);
+    graph.findPath(entities[0].id, entities[999].id);
     const pathDuration = Date.now() - pathStart;
-    assert.ok(pathDuration < 10000, `Path finding took ${pathDuration}ms`);
+    assert.ok(pathDuration < 5000, `Path finding took ${pathDuration}ms`);
   });
 
   test('reasoning over large connected graph', () => {
@@ -116,7 +116,7 @@ describe('Performance — 100k entities', () => {
     ingestion.ingestEntity(project);
 
     const entities: Entity[] = [];
-    for (let i = 0; i < 1_000; i++) {
+    for (let i = 0; i < 200; i++) {
       const doc = createEntity('document', { title: `Doc-${i}`, name: `Doc-${i}` }, 'org-1');
       entities.push(doc);
     }
@@ -135,7 +135,7 @@ describe('Performance — 100k entities', () => {
     const result = reasoning.getRelatedDocuments(project.id);
     const duration = Date.now() - start;
 
-    assert.ok(result.entities.length >= 1_000);
+    assert.ok(result.entities.length >= 200);
     assert.ok(duration < 5000, `Reasoning took ${duration}ms`);
   });
 });

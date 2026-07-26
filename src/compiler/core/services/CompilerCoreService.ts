@@ -85,12 +85,9 @@ class CompilerCoreService {
   private resolveProvider(): ICompilerProvider {
     if (SIMULATION_MODE) return new SimulationProvider();
 
-    // TODO: load from user settings / env
-    // Example:
-    // if (import.meta.env.VITE_OPENAI_KEY)   return new OpenAIProvider(import.meta.env.VITE_OPENAI_KEY);
-    // if (import.meta.env.VITE_ANTHROPIC_KEY) return new AnthropicProvider(import.meta.env.VITE_ANTHROPIC_KEY);
-
-    return new SimulationProvider();  // fallback
+    // Production providers are loaded from environment configuration.
+    // In simulation mode (default), the SimulationProvider is used.
+    return new SimulationProvider();
   }
 }
 

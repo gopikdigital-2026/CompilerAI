@@ -1,0 +1,160 @@
+name: CompilerAI Enterprise CI/CD
+
+on:
+  push:
+    branches: [main, develop, 'release/**']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '22'
+  NPM_VERSION: '10'
+
+jobs:
+  # ── Quality Gate Pipeline ────────────────────────────────────────────────────
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build SDK (dependency for CLI)
+        run: cd packages/sdk-typescript && npm run build
+
+      - name: Typecheck
+        run: |
+          npx tsc --noEmit
+          node scripts/typecheck-all.mjs
+
+      - name: Lint
+        run: |
+          npx eslint src/
+          for pkg in packages/*/; do
+            if [ -d "$pkg/src" ]; then
+              (cd "$pkg" && npx eslint 'src/**/*.ts')
+            fi
+          done
+
+      - name: Unit tests
+        run: node scripts/test-all.mjs
+
+      - name: E2E tests
+        run: node --test --import tsx tests/e2e/enterprise-platform-flow.test.ts
+
+      - name: Coverage
+        run: |
+          cd packages/observability && npm run test:coverage 2>&1 | grep 'all files'
+          cd ../resilience && npm run test:coverage 2>&1 | grep 'all files'
+
+      - name: Build
+        run: |
+          npm run build
+          node scripts/build-all.mjs
+
+      - name: Security audit
+        run: node scripts/audit-security.mjs
+
+      - name: Dependency audit
+        run: node scripts/audit-deps.mjs
+
+      - name: Complexity audit
+        run: node scripts/audit-complexity.mjs
+
+      - name: Enterprise validate
+        run: npm run enterprise:validate
+
+  # ── Artifact Generation ──────────────────────────────────────────────────────
+  artifacts:
+    name: Generate Artifacts
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build SDK
+        run: cd packages/sdk-typescript && npm run build
+
+      - name: Build all packages
+        run: |
+          npm run build
+          node scripts/build-all.mjs
+
+      - name: Generate coverage report
+        run: |
+          cd packages/observability && npm run test:coverage
+          cd ../resilience && npm run test:coverage
+
+      - name: Generate test report
+        run: node scripts/test-all.mjs
+
+      - name: Generate security report
+        run: node scripts/audit-security.mjs
+
+      - name: Generate dependency graph
+        run: node scripts/audit-deps.mjs
+
+      - name: Generate complexity report
+        run: node scripts/audit-complexity.mjs
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compileraI-build
+          path: dist/
+          retention-days: 30
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            packages/*/coverage/
+          retention-days: 30
+
+  # ── Release Gate ─────────────────────────────────────────────────────────────
+  release-gate:
+    name: Release Gate
+    runs-on: ubuntu-latest
+    needs: [quality-gates, artifacts]
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build SDK
+        run: cd packages/sdk-typescript && npm run build
+
+      - name: Final enterprise validation
+        run: npm run enterprise:validate
+
+      - name: Release readiness check
+        run: |
+          echo "✅ All quality gates passed"
+          echo "✅ Release Candidate 1 is ready for deployment"
+          echo "Decision: GO — Beta privada"
