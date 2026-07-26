@@ -12,15 +12,21 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
     "test": "node --test --import tsx --test-reporter spec tests/**/*.test.ts",
     "cli": "tsx src/cli.ts"
   },
   "dependencies": {
-    "@compilerai/sdk-typescript": "file:../sdk-typescript"
+    "@compilerai/sdk-typescript": "*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "eslint": "^9.12.0",
+    "@eslint/js": "^9.12.0",
+    "typescript-eslint": "^8.8.0",
+    "globals": "^15.9.0",
+    "@types/node": "^22.0.0"
   },
   "engines": {
     "node": ">=20"
