@@ -1,7 +1,7 @@
 {
   "name": "@compilerai/monorepo",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.0-rc1",
   "type": "module",
   "workspaces": [
     "packages/agent-runtime",
@@ -33,7 +33,9 @@
     "lint:packages": "node scripts/lint-all.mjs",
     "test:packages": "node scripts/test-all.mjs",
     "audit:deps": "node scripts/audit-deps.mjs",
-    "validate": "node scripts/validate.mjs"
+    "quality:gates": "node scripts/quality-gates.mjs",
+    "validate": "node scripts/validate.mjs",
+    "rc1:validate": "node scripts/quality-gates.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

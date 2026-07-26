@@ -1,4 +1,5 @@
 // Typecheck all workspace packages sequentially.
+// Builds inter-package dependencies first so type resolution works.
 
 import { readdirSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -8,6 +9,19 @@ const PACKAGES_DIR = join(process.cwd(), 'packages');
 const packages = readdirSync(PACKAGES_DIR).filter((p) =>
   existsSync(join(PACKAGES_DIR, p, 'package.json')),
 );
+
+// First, build any packages that are dependencies of others
+const buildOrder = ['sdk-typescript'];
+for (const pkg of buildOrder) {
+  const pkgDir = join(PACKAGES_DIR, pkg);
+  if (existsSync(pkgDir)) {
+    try {
+      execSync('npm run build', { cwd: pkgDir, stdio: 'pipe', timeout: 60000 });
+    } catch {
+      // Build failure is non-fatal for typecheck — the typecheck will catch it
+    }
+  }
+}
 
 let failed = 0;
 let checked = 0;
@@ -23,7 +37,7 @@ for (const pkg of packages) {
 
   process.stdout.write(`  [typecheck] ${pkg}... `);
   try {
-    execSync('npm run typecheck', { cwd: pkgDir, stdio: 'pipe', timeout: 30000 });
+    execSync('npm run typecheck', { cwd: pkgDir, stdio: 'pipe', timeout: 60000 });
     console.log('OK');
     checked++;
   } catch (err) {
