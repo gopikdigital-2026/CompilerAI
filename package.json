@@ -18,7 +18,8 @@
     "packages/sdk-typescript",
     "packages/security-governance",
     "packages/skills-marketplace",
-    "packages/observability"
+    "packages/observability",
+    "packages/resilience"
   ],
   "scripts": {
     "dev": "vite",
