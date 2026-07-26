@@ -319,7 +319,7 @@ export const translations = {
     settings: {
       title: 'Configuración',
       subtitle: 'Gestiona tu cuenta, seguridad y preferencias',
-      sections: ['Perfil', 'Organización', 'Plan', 'Facturación', 'Notificaciones', 'API Keys', 'Seguridad', 'Apariencia'],
+      sections: ['Perfil', 'Organización', 'Equipo', 'Facturación', 'API Keys', 'Seguridad', 'Notificaciones', 'Integraciones'],
       profileTitle: 'Información del perfil',
       profileChangePhoto: 'Cambiar foto',
       profileFields: ['Nombre completo', 'Email', 'Cargo'],
@@ -700,7 +700,7 @@ export const translations = {
     settings: {
       title: 'Settings',
       subtitle: 'Manage your account, security and preferences',
-      sections: ['Profile', 'Organization', 'Plan', 'Billing', 'Notifications', 'API Keys', 'Security', 'Appearance'],
+      sections: ['Profile', 'Organization', 'Team', 'Billing', 'API Keys', 'Security', 'Notifications', 'Integrations'],
       profileTitle: 'Profile information',
       profileChangePhoto: 'Change photo',
       profileFields: ['Full name', 'Email', 'Job title'],

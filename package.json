@@ -35,6 +35,7 @@
     "audit:deps": "node scripts/audit-deps.mjs",
     "audit:security": "node scripts/audit-security.mjs",
     "audit:complexity": "node scripts/audit-complexity.mjs",
+    "audit:functional-ui": "node scripts/audit-functional-ui.mjs",
     "quality:gates": "node scripts/quality-gates.mjs",
     "enterprise:validate": "node scripts/enterprise-validate.mjs",
     "test:integration": "node --test --import tsx tests/e2e/enterprise-platform-flow.test.ts",

@@ -142,9 +142,9 @@ export function Register({ onNavigate }: RegisterProps) {
               <input type="checkbox" id="terms" className="mt-0.5 rounded" required />
               <label htmlFor="terms" className="text-xs text-neutral-500 leading-relaxed">
                 {a.terms}{' '}
-                <a href="#" className="text-brand-400 hover:underline">{a.termsLink}</a>
+                <span className="text-brand-400 cursor-pointer hover:underline">{a.termsLink}</span>
                 {' '}{a.and}{' '}
-                <a href="#" className="text-brand-400 hover:underline">{a.privacyLink}</a>
+                <span className="text-brand-400 cursor-pointer hover:underline">{a.privacyLink}</span>
               </label>
             </div>
             <button

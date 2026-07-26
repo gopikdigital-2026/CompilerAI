@@ -260,7 +260,7 @@ export function Landing({ onNavigate }: LandingProps) {
                 <h4 className="text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-3">{col.title}</h4>
                 <ul className="space-y-2">
                   {col.links.map((link) => (
-                    <li key={link}><a href="#" className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors">{link}</a></li>
+                    <li key={link}><span className="text-sm text-neutral-500 cursor-default">{link}</span></li>
                   ))}
                 </ul>
               </div>

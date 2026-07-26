@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, User, Bell, Key, CreditCard, Shield, Palette, ChevronRight, Building2, Star, Plus, Trash2, UserPlus, Check } from 'lucide-react';
+import { Settings, User, Bell, Key, CreditCard, Shield, ChevronRight, Building2, Plus, Trash2, UserPlus, Check, Users, Plug, AlertCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useProfile } from '../../hooks/useProfile';
 import { useOrganization } from '../../hooks/useOrganization';
@@ -7,29 +7,44 @@ import { useApiKeys } from '../../hooks/useApiKeys';
 import { useAuth } from '../../hooks/useAuth';
 import type { MemberRole } from '../../types/database';
 
-const SECTION_IDS = ['profile', 'organization', 'plan', 'billing', 'notifications', 'api', 'security', 'appearance'] as const;
+const SECTION_IDS = ['profile', 'organization', 'team', 'billing', 'api', 'security', 'notifications', 'integrations'] as const;
 type SectionId = typeof SECTION_IDS[number];
 
 const SECTION_ICONS: Record<SectionId, React.ReactNode> = {
-  profile:      <User size={16} />,
-  organization: <Building2 size={16} />,
-  plan:         <Star size={16} />,
-  billing:      <CreditCard size={16} />,
+  profile:       <User size={16} />,
+  organization:  <Building2 size={16} />,
+  team:          <Users size={16} />,
+  billing:       <CreditCard size={16} />,
+  api:           <Key size={16} />,
+  security:      <Shield size={16} />,
   notifications: <Bell size={16} />,
-  api:          <Key size={16} />,
-  security:     <Shield size={16} />,
-  appearance:   <Palette size={16} />,
+  integrations:  <Plug size={16} />,
 };
 
-export function SettingsPage() {
+const SECTION_STATUS: Record<SectionId, 'available' | 'config-required' | 'coming-soon'> = {
+  profile:       'available',
+  organization:  'available',
+  team:          'available',
+  billing:       'config-required',
+  api:           'available',
+  security:      'coming-soon',
+  notifications: 'available',
+  integrations:  'config-required',
+};
+
+interface SettingsPageProps {
+  initialSection?: SectionId;
+}
+
+export function SettingsPage({ initialSection }: SettingsPageProps) {
   const { t, lang } = useTranslation();
   const s = t.settings;
   const { user } = useAuth();
-  const { profile, updateProfile } = useProfile();
-  const { activeOrg, members, saveOrg } = useOrganization();
-  const { apiKeys, create: createKey, revoke: revokeKey } = useApiKeys(activeOrg?.id);
+  const { profile, loading: profileLoading, updateProfile } = useProfile();
+  const { activeOrg, members, loading: orgLoading, saveOrg } = useOrganization();
+  const { apiKeys, loading: keysLoading, create: createKey, revoke: revokeKey } = useApiKeys(activeOrg?.id);
 
-  const [activeSection, setActiveSection] = useState<SectionId>('profile');
+  const [activeSection, setActiveSection] = useState<SectionId>(initialSection ?? 'profile');
   const [notifEnabled, setNotifEnabled] = useState([true, true, true, false, false]);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
@@ -103,6 +118,12 @@ export function SettingsPage() {
                 <div className="flex items-center gap-2.5">
                   {SECTION_ICONS[id]}
                   {s.sections[i]}
+                  {SECTION_STATUS[id] === 'config-required' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-warning-500" title={lang === 'es' ? 'Configuración necesaria' : 'Configuration required'} />
+                  )}
+                  {SECTION_STATUS[id] === 'coming-soon' && (
+                    <span className="text-[9px] text-neutral-600 bg-surface-700 px-1 py-0.5 rounded">{lang === 'es' ? 'Próx.' : 'Soon'}</span>
+                  )}
                 </div>
                 {activeSection === id && <ChevronRight size={14} />}
               </button>
@@ -115,14 +136,22 @@ export function SettingsPage() {
           {activeSection === 'profile' && (
             <>
               <h3 className="text-base font-semibold text-neutral-100 pb-3 border-b border-surface-700">{s.profileTitle}</h3>
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-brand-gradient flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-neutral-100">{profile?.full_name || user?.email}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{user?.email} · {activeOrg ? getPlanLabel(activeOrg.plan) : s.planFreeLabel}</p>
-                  <button className="btn-secondary text-xs mt-2 py-1.5">{s.profileChangePhoto}</button>
+              {profileLoading ? (
+                <div className="flex items-center gap-3 text-neutral-500">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span className="text-sm">{t.common.loading}</span>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl bg-brand-gradient flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-neutral-100">{profile?.full_name || user?.email}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{user?.email} · {activeOrg ? getPlanLabel(activeOrg.plan) : s.planFreeLabel}</p>
+                    <button className="btn-secondary text-xs mt-2 py-1.5" disabled>{s.profileChangePhoto}</button>
+                  </div>
+                </div>
+              )}
+              {profileLoading ? null : (
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-neutral-400 mb-1.5">{s.profileFields[0]}</label>
@@ -147,6 +176,7 @@ export function SettingsPage() {
                   />
                 </div>
               </div>
+              )}
               <button onClick={handleSaveProfile} className="btn-primary text-sm">
                 {profileSaved ? <><Check size={14} /> {lang === 'es' ? 'Guardado' : 'Saved'}</> : t.common.save}
               </button>
@@ -217,76 +247,33 @@ export function SettingsPage() {
             </>
           )}
 
-          {/* Plan */}
-          {activeSection === 'plan' && (
-            <>
-              <h3 className="text-base font-semibold text-neutral-100 pb-3 border-b border-surface-700">{s.planTitle}</h3>
-              <p className="text-xs font-medium text-neutral-400 mb-4">{s.planCurrentLabel}: <span className="text-brand-400 font-semibold">{activeOrg ? getPlanLabel(activeOrg.plan) : s.planFreeLabel}</span></p>
-              <div className="grid sm:grid-cols-3 gap-4">
-                {([
-                  { key: 'free', label: s.planFreeLabel, features: s.planFreeFeatures, price: '$0' },
-                  { key: 'pro', label: s.planProLabel, features: s.planProFeatures, price: '$49' },
-                  { key: 'enterprise', label: s.planEnterpriseLabel, features: s.planEnterpriseFeatures, price: lang === 'es' ? 'Personalizado' : 'Custom' },
-                ] as const).map((plan) => {
-                  const isActive = (activeOrg?.plan ?? 'free') === plan.key;
-                  return (
-                    <div key={plan.key} className={`rounded-xl border p-4 transition-all ${isActive ? 'border-brand-500/50 bg-brand-500/10' : 'border-surface-600 bg-surface-750 hover:border-surface-500'}`}>
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-neutral-100">{plan.label}</p>
-                        {isActive && <span className="text-[10px] bg-brand-500 text-white px-1.5 py-0.5 rounded-full font-medium">{lang === 'es' ? 'Actual' : 'Current'}</span>}
-                      </div>
-                      <p className="text-xl font-bold text-neutral-100 mb-3">{plan.price}<span className="text-xs font-normal text-neutral-500">{plan.key !== 'enterprise' ? '/mo' : ''}</span></p>
-                      <ul className="space-y-1.5 mb-4">
-                        {plan.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2 text-xs text-neutral-400">
-                            <Check size={11} className="text-brand-400 mt-0.5 flex-shrink-0" />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                      {!isActive && (
-                        <button className={`w-full text-xs py-2 rounded-lg font-medium transition-all ${plan.key === 'pro' ? 'btn-primary' : 'btn-secondary'}`}>
-                          {s.planUpgrade}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          {/* Billing */}
+          {/* Billing — Not configured */}
           {activeSection === 'billing' && (
             <>
               <h3 className="text-base font-semibold text-neutral-100 pb-3 border-b border-surface-700">{s.billingTitle}</h3>
-              <div className="bg-brand-500/10 border border-brand-500/20 rounded-xl p-5 mb-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-sm font-semibold text-neutral-100">{s.billingPlan}</p>
-                    <p className="text-xs text-neutral-400 mt-0.5">{s.billingNext} 1 {lang === 'es' ? 'Agosto' : 'August'} 2025</p>
-                  </div>
-                  <span className="text-xl font-bold text-brand-400">$49<span className="text-sm font-normal text-neutral-500">/mo</span></span>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-14 h-14 rounded-xl bg-warning-500/10 border border-warning-500/20 flex items-center justify-center mx-auto mb-4">
+                  <CreditCard size={24} className="text-warning-400" />
                 </div>
-                <div className="space-y-2">
-                  {s.billingUsageLabels.map((label, i) => {
-                    const used = [12, 84700][i];
-                    const limit = [25, 200000][i];
-                    return (
-                      <div key={label}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-neutral-400">{label}</span>
-                          <span className="text-xs text-neutral-400">{used.toLocaleString()} / {limit.toLocaleString()}</span>
-                        </div>
-                        <div className="h-1.5 bg-surface-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-brand-500 rounded-full" style={{ width: `${(used / limit) * 100}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
+                <h4 className="text-sm font-semibold text-neutral-200 mb-2">
+                  {lang === 'es' ? 'Facturación no configurada' : 'Billing not configured'}
+                </h4>
+                <p className="text-xs text-neutral-500 max-w-sm mb-4">
+                  {lang === 'es'
+                    ? 'Para activar la facturación, conecta Stripe mediante las variables de entorno VITE_STRIPE_PUBLISHABLE_KEY y la clave secreta en el servidor.'
+                    : 'To enable billing, connect Stripe via the VITE_STRIPE_PUBLISHABLE_KEY environment variable and the secret key on the server.'}
+                </p>
+                <div className="bg-surface-750 border border-surface-600 rounded-lg px-4 py-3 text-left">
+                  <p className="text-[10px] font-medium text-neutral-400 mb-1">
+                    {lang === 'es' ? 'Variables necesarias:' : 'Required variables:'}
+                  </p>
+                  <ul className="space-y-1">
+                    <li className="text-[10px] font-mono text-neutral-500">VITE_STRIPE_PUBLISHABLE_KEY</li>
+                    <li className="text-[10px] font-mono text-neutral-500">STRIPE_SECRET_KEY (server)</li>
+                    <li className="text-[10px] font-mono text-neutral-500">STRIPE_WEBHOOK_SECRET</li>
+                  </ul>
                 </div>
               </div>
-              <button className="btn-primary text-sm">{s.billingUpgrade}</button>
             </>
           )}
 
@@ -360,15 +347,92 @@ export function SettingsPage() {
             </>
           )}
 
-          {/* Security / Appearance */}
-          {(activeSection === 'security' || activeSection === 'appearance') && (
+          {/* Security */}
+          {activeSection === 'security' && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-12 h-12 rounded-xl bg-surface-700 border border-surface-600 flex items-center justify-center mx-auto mb-4">
-                <Settings size={20} className="text-neutral-500" />
+                <Shield size={20} className="text-neutral-500" />
               </div>
               <h3 className="text-sm font-semibold text-neutral-300 mb-2">{s.comingSoonTitle}</h3>
               <p className="text-xs text-neutral-500">{s.comingSoonDesc}</p>
             </div>
+          )}
+
+          {/* Integrations */}
+          {activeSection === 'integrations' && (
+            <>
+              <h3 className="text-base font-semibold text-neutral-100 pb-3 border-b border-surface-700">
+                {lang === 'es' ? 'Integraciones' : 'Integrations'}
+              </h3>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-14 h-14 rounded-xl bg-warning-500/10 border border-warning-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Plug size={24} className="text-warning-400" />
+                </div>
+                <h4 className="text-sm font-semibold text-neutral-200 mb-2">
+                  {lang === 'es' ? 'Configuración necesaria' : 'Configuration required'}
+                </h4>
+                <p className="text-xs text-neutral-500 max-w-sm">
+                  {lang === 'es'
+                    ? 'Las integraciones con servicios externos requieren claves API y configuración del servidor.'
+                    : 'External service integrations require API keys and server-side configuration.'}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Team */}
+          {activeSection === 'team' && (
+            <>
+              <h3 className="text-base font-semibold text-neutral-100 pb-3 border-b border-surface-700">
+                {lang === 'es' ? 'Equipo' : 'Team'}
+              </h3>
+              {orgLoading ? (
+                <div className="flex items-center gap-3 text-neutral-500">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span className="text-sm">{t.common.loading}</span>
+                </div>
+              ) : members.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-surface-700 border border-surface-600 flex items-center justify-center mx-auto mb-4">
+                    <Users size={20} className="text-neutral-500" />
+                  </div>
+                  <p className="text-sm text-neutral-400 mb-2">
+                    {lang === 'es' ? 'No hay miembros en esta organización' : 'No members in this organization'}
+                  </p>
+                  <p className="text-xs text-neutral-500 mb-4">
+                    {lang === 'es' ? 'Invita a tu equipo para empezar a colaborar.' : 'Invite your team to start collaborating.'}
+                  </p>
+                  <button className="btn-secondary text-xs py-1.5" disabled>
+                    <UserPlus size={13} /> {s.orgInvite}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-neutral-200">{s.orgMembersLabel}</h4>
+                    <button className="btn-secondary text-xs py-1.5" disabled title={lang === 'es' ? 'Próximamente' : 'Coming soon'}>
+                      <UserPlus size={13} /> {s.orgInvite}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {members.map((m) => (
+                      <div key={m.id} className="flex items-center justify-between bg-surface-750 border border-surface-600 rounded-lg px-4 py-2.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-brand-gradient flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-neutral-200">{m.profile.full_name}</p>
+                            <p className="text-xs text-neutral-500">{m.profile.job_title || ''}</p>
+                          </div>
+                        </div>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.role === 'owner' ? 'bg-brand-500/15 text-brand-400' : 'bg-surface-700 text-neutral-400'}`}>
+                          {getRoleLabel(m.role)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
       </div>

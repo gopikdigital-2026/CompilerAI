@@ -53,7 +53,7 @@ export function WorkflowToolbar({
       {/* Primary actions */}
       <ToolbarBtn onClick={onSave} icon={<Save size={13} />} label="Guardar" />
       <ToolbarBtn onClick={onShowVersions} icon={<GitBranch size={13} />} label="Versiones" />
-      <ToolbarBtn onClick={() => {}} icon={<Play size={13} />} label="Simular" accent="green" />
+      <ToolbarBtn onClick={() => undefined} icon={<Play size={13} />} label="Simular" accent="green" disabled title="Simulación no disponible en esta versión" />
 
       <div className="h-4 w-px bg-surface-700" />
 
@@ -87,9 +87,9 @@ export function WorkflowToolbar({
 
       {/* IO buttons */}
       <div className="hidden lg:flex items-center gap-1">
-        <ToolbarBtn onClick={() => {}} icon={<Upload size={13} />} label="Importar" />
-        <ToolbarBtn onClick={() => {}} icon={<Download size={13} />} label="Exportar" />
-        <ToolbarBtn onClick={() => {}} icon={<Share2 size={13} />} label="Compartir" />
+        <ToolbarBtn onClick={() => undefined} icon={<Upload size={13} />} label="Importar" disabled title="Importación no disponible" />
+        <ToolbarBtn onClick={() => undefined} icon={<Download size={13} />} label="Exportar" disabled title="Exportación no disponible" />
+        <ToolbarBtn onClick={() => undefined} icon={<Share2 size={13} />} label="Compartir" disabled title="Compartir no disponible" />
       </div>
 
       <div className="h-4 w-px bg-surface-700 hidden lg:block" />
@@ -108,18 +108,20 @@ export function WorkflowToolbar({
 }
 
 function ToolbarBtn({
-  onClick, icon, label, accent,
+  onClick, icon, label, accent, disabled, title,
 }: {
-  onClick: () => void; icon: React.ReactNode; label: string; accent?: 'green';
+  onClick: () => void; icon: React.ReactNode; label: string; accent?: 'green'; disabled?: boolean; title?: string;
 }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
+      title={title}
       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
         accent === 'green'
           ? 'text-green-400 hover:text-green-300 hover:bg-green-900/30'
           : 'text-neutral-400 hover:text-neutral-200 hover:bg-surface-800'
-      }`}
+      } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
     >
       {icon} {label}
     </button>

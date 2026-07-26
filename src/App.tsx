@@ -2,9 +2,20 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { Dashboard } from './pages/Dashboard';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { useState, useEffect } from 'react';
 
 function AppRouter() {
-  const { loading } = useAuth();
+  const { loading, user, signOut } = useAuth();
+  const [authView, setAuthView] = useState<'login' | 'register' | 'forgot'>('login');
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#register') setAuthView('register');
+    else if (hash === '#forgot') setAuthView('forgot');
+  }, []);
 
   if (loading) {
     return (
@@ -17,8 +28,30 @@ function AppRouter() {
     );
   }
 
-  // Always show Dashboard for preview (bypass auth)
-  return <Dashboard onLogout={() => {}} />;
+  const handleAuthNavigate = (page: string) => {
+    if (page === 'register') { setAuthView('register'); window.location.hash = '#register'; }
+    else if (page === 'forgot-password') { setAuthView('forgot'); window.location.hash = '#forgot'; }
+    else if (page === 'landing') { setAuthView('login'); window.location.hash = ''; }
+    else setAuthView('login');
+  };
+
+  if (!user) {
+    if (authView === 'register') {
+      return <Register onNavigate={handleAuthNavigate} />;
+    }
+    if (authView === 'forgot') {
+      return <ForgotPassword onNavigate={handleAuthNavigate} />;
+    }
+    return <Login onNavigate={handleAuthNavigate} />;
+  }
+
+  const handleLogout = async () => {
+    await signOut();
+    setAuthView('login');
+    window.location.hash = '';
+  };
+
+  return <Dashboard onLogout={handleLogout} />;
 }
 
 function App() {

@@ -27,7 +27,7 @@ function PageFallback() {
   );
 }
 
-function PageContent({ page }: { page: DashboardPage }) {
+function PageContent({ page, initialSection }: { page: DashboardPage; initialSection?: string }) {
   switch (page) {
     case 'home':         return <HomeDashboard />;
     case 'compiler':     return <RealityCompiler />;
@@ -42,7 +42,7 @@ function PageContent({ page }: { page: DashboardPage }) {
     case 'integrations': return <Integrations />;
     case 'marketplace':  return <Marketplace />;
     case 'monitor':      return <Monitor />;
-    case 'settings':     return <SettingsPage />;
+    case 'settings':     return <SettingsPage initialSection={initialSection as any} />;
   }
 }
 
@@ -52,15 +52,30 @@ interface DashboardProps {
 
 export function Dashboard({ onLogout }: DashboardProps) {
   const [currentPage, setCurrentPage] = useState<DashboardPage>('home');
+  const [settingsSection, setSettingsSection] = useState<string | undefined>(undefined);
+
+  const handleNavigate = (page: DashboardPage) => {
+    setCurrentPage(page);
+    if (page !== 'settings') setSettingsSection(undefined);
+  };
+
+  const handleNavigateToSettings = (page: DashboardPage, section?: string) => {
+    if (section) setSettingsSection(section);
+    setCurrentPage(page);
+  };
 
   return (
     <div className="flex h-screen bg-surface-950 overflow-hidden">
-      <Sidebar current={currentPage} onNavigate={setCurrentPage} onLogout={onLogout} />
+      <Sidebar current={currentPage} onNavigate={handleNavigate} onLogout={onLogout} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <Topbar currentPage={currentPage} />
+        <Topbar
+          currentPage={currentPage}
+          onNavigate={(p) => handleNavigateToSettings(p, undefined)}
+          onLogout={onLogout}
+        />
         <main className={`flex-1 bg-surface-900 min-h-0 ${FULL_HEIGHT_PAGES.includes(currentPage) ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
           <Suspense fallback={<PageFallback />}>
-            <PageContent page={currentPage} />
+            <PageContent page={currentPage} initialSection={settingsSection} />
           </Suspense>
         </main>
       </div>
