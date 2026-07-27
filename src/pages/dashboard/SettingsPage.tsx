@@ -51,6 +51,15 @@ const INTEGRATIONS_LIST = [
 
 interface SettingsPageProps { initialSection?: SectionId; }
 
+const VALID_SECTIONS = new Set<string>(SECTION_IDS);
+
+function getSectionFromHash(): SectionId {
+  const hash = window.location.hash;
+  const match = hash.match(/^#settings\/([a-z-]+)$/);
+  if (match && VALID_SECTIONS.has(match[1])) return match[1] as SectionId;
+  return 'profile';
+}
+
 export function SettingsPage({ initialSection }: SettingsPageProps) {
   const { t, lang } = useTranslation();
   const s = t.settings;
@@ -59,7 +68,22 @@ export function SettingsPage({ initialSection }: SettingsPageProps) {
   const { activeOrg, members, loading: orgLoading, error: orgError, saveOrg, changeMemberRole, removeMemberById } = useOrganization();
   const { apiKeys, loading: keysLoading, error: keysError, create: createKey, revoke: revokeKey } = useApiKeys(activeOrg?.id);
 
-  const [activeSection, setActiveSection] = useState<SectionId>(initialSection ?? 'profile');
+  const [activeSection, setActiveSection] = useState<SectionId>(initialSection ?? getSectionFromHash());
+
+  // Sync from initialSection prop (when navigated from Topbar menu)
+  useEffect(() => {
+    if (initialSection) {
+      setActiveSection(initialSection);
+      window.location.hash = `#settings/${initialSection}`;
+    }
+  }, [initialSection]);
+
+  // Sync from URL hash (back/forward, reload, direct link)
+  useEffect(() => {
+    const onHashChange = () => setActiveSection(getSectionFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -282,7 +306,11 @@ export function SettingsPage({ initialSection }: SettingsPageProps) {
               return (
                 <button
                   key={id}
-                  onClick={() => setActiveSection(id)}
+                  data-testid={`settings-nav-${id}`}
+                  onClick={() => {
+                    setActiveSection(id);
+                    window.location.hash = `#settings/${id}`;
+                  }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all focus-visible:ring-2 focus-visible:ring-brand-500 outline-none ${activeSection === id ? 'bg-brand-500/15 text-brand-400' : 'text-neutral-400 hover:text-neutral-100 hover:bg-surface-700'}`}
                   aria-current={activeSection === id ? 'page' : undefined}
                 >

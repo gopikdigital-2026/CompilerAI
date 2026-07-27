@@ -227,6 +227,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
         <div className="relative" ref={profileRef}>
           <button
             ref={profileBtnRef}
+            data-testid="profile-menu-trigger"
             onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); setFocusedIndex(-1); }}
             className="flex items-center gap-2 pl-2 pr-3 h-9 rounded-lg hover:bg-surface-700 transition-all focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-900"
             aria-label={lang === 'es' ? 'Menú de perfil' : 'Profile menu'}
@@ -244,6 +245,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
             <div
               className="absolute right-0 top-12 w-56 card border-surface-600 shadow-card-hover animate-fade-in overflow-hidden"
               role="menu"
+              data-testid="profile-menu"
               aria-label="Profile menu"
               onKeyDown={handleProfileKeydown}
             >
@@ -255,6 +257,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
                 <button
                   key={item.section}
                   ref={(el) => { if (el) menuRefs.current.set(item.section, el); }}
+                  data-testid={`${item.section === 'api' ? 'api-keys' : item.section}-link`}
                   onClick={() => navigateToSection(item.section)}
                   className="w-full flex items-center gap-3 text-left px-4 py-2.5 text-sm text-neutral-400 hover:text-neutral-100 hover:bg-surface-750 transition-colors focus-visible:bg-surface-750 focus-visible:text-neutral-100 outline-none"
                   role="menuitem"
@@ -272,6 +275,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
                 )}
                 <button
                   ref={(el) => { if (el) menuRefs.current.set('logout', el); }}
+                  data-testid="logout-button"
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 text-left px-4 py-2.5 text-sm text-error-400 hover:bg-error-500/10 transition-colors focus-visible:bg-error-500/10 outline-none"
                   role="menuitem"

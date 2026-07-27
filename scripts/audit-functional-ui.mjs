@@ -56,12 +56,12 @@ function scanFile(filePath, content) {
 function scanDir(dir) {
   if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (['node_modules', 'dist', '.git', 'coverage'].includes(entry.name)) continue;
+    if (['node_modules', 'dist', '.git', 'coverage', 'playwright-report', 'test-results', 'benchmarks', 'fixtures', 'generated', 'build', 'performance'].includes(entry.name)) continue;
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
       scanDir(fullPath);
     } else if (entry.name.endsWith('.tsx') || entry.name.endsWith('.ts')) {
-      if (entry.name.endsWith('.test.') || entry.name.endsWith('.d.')) continue;
+      if (entry.name.endsWith('.test.') || entry.name.endsWith('.d.') || entry.name.endsWith('.benchmark.') || entry.name.endsWith('.spec.')) continue;
       scanFile(fullPath, readFileSync(fullPath, 'utf8'));
     }
   }

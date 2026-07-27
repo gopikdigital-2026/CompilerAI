@@ -72,6 +72,57 @@ jobs:
       - name: Enterprise validate
         run: npm run enterprise:validate
 
+  # ── UX E2E Validation ──────────────────────────────────────────────────────
+  ux-e2e-validation:
+    name: UX E2E Validation (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      E2E_BASE_URL: http://localhost:5173
+      E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Run E2E tests
+        run: npm run e2e
+
+      - name: Functional UI audit
+        run: npm run audit:functional-ui
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
   # ── Artifact Generation ──────────────────────────────────────────────────────
   artifacts:
     name: Generate Artifacts
