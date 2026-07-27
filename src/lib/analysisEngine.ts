@@ -5,7 +5,9 @@ import type {
   BusinessArea,
   EvidenceItem,
   OpportunityPriority,
+  OpportunityRisk,
 } from '../types/analysis';
+import { calculatePriority } from './prioritizationEngine';
 
 export const ANALYSIS_STAGES = [
   { id: 'preparing', label: 'Preparando', description: 'Inicializando motor de análisis' },
@@ -40,14 +42,6 @@ interface AnalysisDataInputs {
   connectorsConnected: number;
 }
 
-function scoreToLabel(score: number): string {
-  if (score >= 80) return 'Excelente';
-  if (score >= 60) return 'Bueno';
-  if (score >= 40) return 'Regular';
-  if (score >= 20) return 'Limitado';
-  return 'Sin datos';
-}
-
 function priorityScore(priority: OpportunityPriority): number {
   const scores = { critical: 4, high: 3, medium: 2, low: 1 };
   return scores[priority] ?? 2;
@@ -63,7 +57,52 @@ function roiEstimate(impact: string, effort: string): string {
   return 'ROI estimado: 50-100%';
 }
 
-function buildEvidence(source: string, dataDescription: string, confidence: number): EvidenceItem[] {
+function economicImpactText(impact: 'high' | 'medium' | 'low', effort: 'high' | 'medium' | 'low'): string {
+  if (impact === 'high' && effort === 'low') return 'Ahorro estimado: 10-20h/semana, €2K-5K/mes';
+  if (impact === 'high' && effort === 'medium') return 'Ahorro estimado: 8-15h/semana, €1.5K-3K/mes';
+  if (impact === 'high') return 'Ahorro estimado: 5-10h/semana, €1K-2K/mes';
+  if (impact === 'medium' && effort === 'low') return 'Ahorro estimado: 3-8h/semana, €500-1.5K/mes';
+  if (impact === 'medium') return 'Ahorro estimado: 2-5h/semana, €300-800/mes';
+  if (impact === 'low') return 'Ahorro estimado: 1-3h/semana, €100-300/mes';
+  return 'Ahorro estimado: 2-5h/semana, €300-800/mes';
+}
+
+function operationalImpactText(category: BusinessArea, impact: 'high' | 'medium' | 'low'): string {
+  const areaTexts: Record<BusinessArea, string> = {
+    marketing: 'Mejora en calidad de prompts y comunicaciones',
+    sales: 'Automatización del seguimiento y nurturing de leads',
+    operations: 'Reducción de tareas manuales y errores operativos',
+    finance: 'Optimización de costes y visibilidad financiera',
+    customer_service: 'Respuestas más rápidas y automatizadas',
+    automation: 'Procesos automatizados que ahorran tiempo manual',
+    technology: 'Mejor uso del motor de IA y compilador',
+    seo: 'Mejor visibilidad orgánica y posicionamiento',
+  };
+  const base = areaTexts[category] ?? 'Mejora operativa';
+  return impact === 'high' ? `${base} — impacto significativo` : impact === 'medium' ? `${base} — impacto moderado` : `${base} — impacto menor`;
+}
+
+function implementationTimeText(effort: 'high' | 'medium' | 'low', dependencies: string[]): string {
+  if (dependencies.length > 2) return '1-2 trimestres';
+  if (effort === 'high') return '1-2 meses';
+  if (effort === 'medium') return '2-4 semanas';
+  return '1-5 días';
+}
+
+function riskText(category: BusinessArea, effort: 'high' | 'medium' | 'low', dependencies: string[]): OpportunityRisk {
+  if (dependencies.length >= 2) return 'high';
+  if (effort === 'high' && dependencies.length > 0) return 'high';
+  if (effort === 'medium' || dependencies.length === 1) return 'medium';
+  return 'low';
+}
+
+function buildEvidence(
+  source: string,
+  dataDescription: string,
+  confidence: number,
+  observed?: string,
+  expected?: string,
+): EvidenceItem[] {
   return [
     {
       dataUsed: dataDescription,
@@ -71,8 +110,63 @@ function buildEvidence(source: string, dataDescription: string, confidence: numb
       date: new Date().toISOString(),
       confidence,
       limitations: 'Análisis basado en datos disponibles en CompilerAI. Conecta más fuentes para mejorar la precisión.',
+      observedValue: observed,
+      expectedValue: expected,
+      quality: confidence >= 80 ? 'high' : confidence >= 50 ? 'medium' : 'low',
     },
   ];
+}
+
+interface OpportunitySeed {
+  title: string;
+  description: string;
+  category: BusinessArea;
+  confidence: number;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  source: string;
+  dependencies: string[];
+  observed?: string;
+  expected?: string;
+  evidenceDescription: string;
+}
+
+function buildOpportunity(seed: OpportunitySeed, now: string): AnalysisOpportunity {
+  const risk = riskText(seed.category, seed.effort, seed.dependencies);
+  const implementationTime = implementationTimeText(seed.effort, seed.dependencies);
+  const evidence = buildEvidence(seed.source, seed.evidenceDescription, seed.confidence, seed.observed, seed.expected);
+  const prioritization = calculatePriority({
+    impact: seed.impact,
+    confidence: seed.confidence,
+    effort: seed.effort,
+    implementationTime,
+    dependencies: seed.dependencies,
+    risk,
+  });
+
+  return {
+    id: crypto.randomUUID(),
+    title: seed.title,
+    description: seed.description,
+    category: seed.category,
+    priority: prioritization.priority,
+    priorityExplanation: prioritization.explanation,
+    confidence: seed.confidence,
+    impact: seed.impact,
+    effort: seed.effort,
+    estimated_roi: roiEstimate(seed.impact, seed.effort),
+    economicImpact: economicImpactText(seed.impact, seed.effort),
+    operationalImpact: operationalImpactText(seed.category, seed.impact),
+    risk,
+    implementationTime,
+    dependencies: seed.dependencies,
+    source: seed.source,
+    evidence,
+    status: 'new',
+    assignedTo: null,
+    created_at: now,
+    resolved_at: null,
+  };
 }
 
 export function generateAnalysisResult(inputs: AnalysisDataInputs): AnalysisResult {
@@ -82,7 +176,6 @@ export function generateAnalysisResult(inputs: AnalysisDataInputs): AnalysisResu
   const hasData = totalActivity > 0;
   const successRate = executionCount > 0 ? Math.round(((executionCount - errorCount) / executionCount) * 100) : 100;
 
-  // Area scores based on real activity
   const areas: AreaScore[] = [
     {
       area: 'automation',
@@ -153,148 +246,123 @@ export function generateAnalysisResult(inputs: AnalysisDataInputs): AnalysisResu
     },
   ];
 
-  // Generate opportunities based on real gaps
   const opportunities: AnalysisOpportunity[] = [];
   const now = new Date().toISOString();
 
   if (workflowCount === 0) {
-    opportunities.push({
-      id: crypto.randomUUID(),
+    opportunities.push(buildOpportunity({
       title: 'Crear tu primera automatización',
       description: 'No tienes workflows creados. Diseñar tu primera automatización puede ahorrar horas de trabajo manual cada semana.',
       category: 'automation',
-      priority: 'high',
       confidence: 95,
       impact: 'high',
       effort: 'low',
-      estimated_roi: roiEstimate('high', 'low'),
       source: 'workflow_designs',
-      evidence: buildEvidence('workflow_designs', `0 workflows en ${org.name}`, 95),
-      status: 'new',
-      created_at: now,
-      resolved_at: null,
-    });
+      dependencies: [],
+      observed: '0 workflows',
+      expected: '1+ workflows activos',
+      evidenceDescription: `0 workflows en ${org.name}`,
+    }, now));
   }
 
   if (inputs.connectorsConnected === 0) {
-    opportunities.push({
-      id: crypto.randomUUID(),
+    opportunities.push(buildOpportunity({
       title: 'Conectar fuente de datos principal',
       description: 'Sin fuentes de datos conectadas, CompilerAI no puede analizar tu negocio. Conectar Gmail, Slack o un CRM es el primer paso.',
       category: 'technology',
-      priority: 'critical',
       confidence: 100,
       impact: 'high',
       effort: 'low',
-      estimated_roi: roiEstimate('high', 'low'),
       source: 'connectors',
-      evidence: buildEvidence('connectors', '0 conectores conectados', 100),
-      status: 'new',
-      created_at: now,
-      resolved_at: null,
-    });
+      dependencies: [],
+      observed: '0 conectores',
+      expected: '1+ conectores activos',
+      evidenceDescription: '0 conectores conectados',
+    }, now));
   }
 
   if (errorCount > 0) {
-    opportunities.push({
-      id: crypto.randomUUID(),
+    opportunities.push(buildOpportunity({
       title: `Revisar ${errorCount} ejecuciones fallidas`,
       description: `${errorCount} ejecuciones han fallado. Corregir los errores puede mejorar la tasa de éxito del ${successRate}% al 100%.`,
       category: 'operations',
-      priority: errorCount > 3 ? 'high' : 'medium',
       confidence: 90,
       impact: 'medium',
       effort: 'low',
-      estimated_roi: roiEstimate('medium', 'low'),
       source: 'execution_runs',
-      evidence: buildEvidence('execution_runs', `${errorCount} errores de ${executionCount} ejecuciones`, 90),
-      status: 'new',
-      created_at: now,
-      resolved_at: null,
-    });
+      dependencies: [],
+      observed: `${successRate}% tasa de éxito`,
+      expected: '100% tasa de éxito',
+      evidenceDescription: `${errorCount} errores de ${executionCount} ejecuciones`,
+    }, now));
   }
 
   if (sessionCount === 0) {
-    opportunities.push({
-      id: crypto.randomUUID(),
+    opportunities.push(buildOpportunity({
       title: 'Realizar tu primer análisis con IA',
       description: 'El Reality Compiler puede transformar tus ideas en blueprints accionables. Tu primera compilación te mostrará el potencial de la IA.',
       category: 'technology',
-      priority: 'medium',
       confidence: 85,
       impact: 'medium',
       effort: 'low',
-      estimated_roi: roiEstimate('medium', 'low'),
       source: 'compiler_sessions',
-      evidence: buildEvidence('compiler_sessions', '0 sesiones de compilación', 85),
-      status: 'new',
-      created_at: now,
-      resolved_at: null,
-    });
+      dependencies: [],
+      observed: '0 sesiones',
+      expected: '1+ sesiones de compilación',
+      evidenceDescription: '0 sesiones de compilación',
+    }, now));
   }
 
   if (promptCount === 0 && sessionCount > 0) {
-    opportunities.push({
-      id: crypto.randomUUID(),
+    opportunities.push(buildOpportunity({
       title: 'Optimizar tus prompts con IA',
       description: 'Prompt Intelligence puede mejorar la calidad de tus instrucciones a la IA. Tus prompts actuales pueden rendir un 20-40% más.',
       category: 'marketing',
-      priority: 'medium',
       confidence: 80,
       impact: 'medium',
       effort: 'low',
-      estimated_roi: roiEstimate('medium', 'low'),
       source: 'prompt_sessions',
-      evidence: buildEvidence('prompt_sessions', '0 prompts optimizados', 80),
-      status: 'new',
-      created_at: now,
-      resolved_at: null,
-    });
+      dependencies: ['compiler_sessions'],
+      observed: '0 prompts optimizados',
+      expected: '20-40% mejora en calidad',
+      evidenceDescription: '0 prompts optimizados',
+    }, now));
   }
 
   if (memberCount === 1 && totalActivity > 5) {
-    opportunities.push({
-      id: crypto.randomUUID(),
+    opportunities.push(buildOpportunity({
       title: 'Invitar a tu equipo',
       description: `Eres el único miembro de ${org.name}. Invitar a tu equipo puede multiplicar la productividad y distribuir el trabajo.`,
       category: 'operations',
-      priority: 'low',
       confidence: 75,
       impact: 'medium',
       effort: 'low',
-      estimated_roi: roiEstimate('medium', 'low'),
       source: 'memberships',
-      evidence: buildEvidence('memberships', `1 miembro en ${org.name}`, 75),
-      status: 'new',
-      created_at: now,
-      resolved_at: null,
-    });
+      dependencies: [],
+      observed: '1 miembro',
+      expected: '3+ miembros',
+      evidenceDescription: `1 miembro en ${org.name}`,
+    }, now));
   }
 
-  // Always add an optimization opportunity if there's activity
   if (hasData && successRate < 100) {
-    opportunities.push({
-      id: crypto.randomUUID(),
+    opportunities.push(buildOpportunity({
       title: 'Optimizar tasa de éxito de ejecuciones',
       description: `La tasa de éxito actual es del ${successRate}%. Identificar y corregir workflows con errores puede llevarla al 100%.`,
       category: 'operations',
-      priority: 'medium',
       confidence: 85,
       impact: 'high',
       effort: 'medium',
-      estimated_roi: roiEstimate('high', 'medium'),
       source: 'execution_runs',
-      evidence: buildEvidence('execution_runs', `Tasa de éxito: ${successRate}%`, 85),
-      status: 'new',
-      created_at: now,
-      resolved_at: null,
-    });
+      dependencies: ['workflow_designs'],
+      observed: `${successRate}% éxito`,
+      expected: '100% éxito',
+      evidenceDescription: `Tasa de éxito: ${successRate}%`,
+    }, now));
   }
 
-  // Sort by priority
   opportunities.sort((a, b) => priorityScore(b.priority) - priorityScore(a.priority));
 
-  // Build strengths and risks
   const strengths: string[] = [];
   const risks: string[] = [];
 
@@ -309,7 +377,6 @@ export function generateAnalysisResult(inputs: AnalysisDataInputs): AnalysisResu
   if (successRate < 80 && executionCount > 0) risks.push(`Tasa de éxito baja (${successRate}%)`);
   if (memberCount === 1) risks.push('Solo un miembro en la organización');
 
-  // Summary
   let summary: string;
   if (!hasData) {
     summary = `${org.name} aún no tiene actividad suficiente. Conecta fuentes de datos y realiza tu primer análisis para recibir recomendaciones personalizadas.`;
@@ -322,7 +389,6 @@ export function generateAnalysisResult(inputs: AnalysisDataInputs): AnalysisResu
     summary = parts.join(' ');
   }
 
-  // Overall confidence
   const confidence = hasData
     ? Math.min(95, 40 + totalActivity * 3 + Math.min(20, inputs.connectorsConnected * 10))
     : 30;
@@ -334,7 +400,7 @@ export function generateAnalysisResult(inputs: AnalysisDataInputs): AnalysisResu
     opportunities,
     areas,
     confidence,
-    engineVersion: '1.0.0',
+    engineVersion: '1.1.0',
   };
 }
 

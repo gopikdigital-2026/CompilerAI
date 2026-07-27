@@ -10,13 +10,31 @@ export type AnalysisStatus =
   | 'error'
   | 'cancelled';
 
-export type OpportunityStatus = 'new' | 'approved' | 'discarded' | 'sent_to_copilot' | 'automated';
+export type OpportunityStatus =
+  | 'new'
+  | 'reviewed'
+  | 'approved'
+  | 'in_progress'
+  | 'completed'
+  | 'discarded'
+  | 'sent_to_copilot'
+  | 'automated';
 
 export type OpportunityPriority = 'critical' | 'high' | 'medium' | 'low';
 
-export type BusinessArea = 'marketing' | 'sales' | 'operations' | 'finance' | 'customer_service' | 'automation' | 'technology';
+export type BusinessArea =
+  | 'marketing'
+  | 'sales'
+  | 'operations'
+  | 'finance'
+  | 'customer_service'
+  | 'automation'
+  | 'technology'
+  | 'seo';
 
 export type AnalysisSeverity = 'critical' | 'high' | 'medium' | 'info';
+
+export type OpportunityRisk = 'high' | 'medium' | 'low';
 
 export interface AnalysisStage {
   id: string;
@@ -36,29 +54,39 @@ export interface AreaScore {
   actions: string[];
 }
 
-export interface AnalysisOpportunity {
-  id: string;
-  title: string;
-  description: string;
-  category: BusinessArea;
-  priority: OpportunityPriority;
-  confidence: number;
-  impact: 'high' | 'medium' | 'low';
-  effort: 'high' | 'medium' | 'low';
-  estimated_roi: string;
-  source: string;
-  evidence: EvidenceItem[];
-  status: OpportunityStatus;
-  created_at: string;
-  resolved_at: string | null;
-}
-
 export interface EvidenceItem {
   dataUsed: string;
   connector: string;
   date: string;
   confidence: number;
   limitations: string;
+  observedValue?: string;
+  expectedValue?: string;
+  quality?: 'high' | 'medium' | 'low';
+}
+
+export interface AnalysisOpportunity {
+  id: string;
+  title: string;
+  description: string;
+  category: BusinessArea;
+  priority: OpportunityPriority;
+  priorityExplanation: string;
+  confidence: number;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  estimated_roi: string;
+  economicImpact: string;
+  operationalImpact: string;
+  risk: OpportunityRisk;
+  implementationTime: string;
+  dependencies: string[];
+  source: string;
+  evidence: EvidenceItem[];
+  status: OpportunityStatus;
+  assignedTo?: string | null;
+  created_at: string;
+  resolved_at: string | null;
 }
 
 export interface AnalysisResult {
@@ -157,4 +185,65 @@ export interface ExecutiveReportData {
   weaknesses: string[];
   nextBestAction: string;
   economicImpact: string;
+}
+
+// ── Opportunity Intelligence Types ──────────────────────────────────────────
+
+export type MatrixQuadrant = 'quick_wins' | 'strategic' | 'fill_ins' | 'time_sinks';
+
+export interface MatrixPosition {
+  x: number;
+  y: number;
+  quadrant: MatrixQuadrant;
+}
+
+export interface OpportunityFilters {
+  area: BusinessArea | 'all';
+  priority: OpportunityPriority | 'all';
+  status: OpportunityStatus | 'all';
+  assignedTo: string | 'all';
+}
+
+export type QuickFilterId =
+  | 'all'
+  | 'critical_only'
+  | 'pending_only'
+  | 'approved_only'
+  | 'executed_only'
+  | 'marketing'
+  | 'sales'
+  | 'finance'
+  | 'operations'
+  | 'seo'
+  | 'automation'
+  | 'customer_service'
+  | 'technology';
+
+export interface QuickFilter {
+  id: QuickFilterId;
+  label: string;
+  filter: Partial<OpportunityFilters>;
+}
+
+export interface PrioritizationFactors {
+  impact: 'high' | 'medium' | 'low';
+  confidence: number;
+  effort: 'high' | 'medium' | 'low';
+  implementationTime: string;
+  dependencies: string[];
+  risk: OpportunityRisk;
+}
+
+export interface PrioritizationResult {
+  priority: OpportunityPriority;
+  explanation: string;
+  score: number;
+  factors: {
+    impactScore: number;
+    confidenceScore: number;
+    costScore: number;
+    timeScore: number;
+    dependencyScore: number;
+    riskScore: number;
+  };
 }
