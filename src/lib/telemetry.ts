@@ -14,7 +14,10 @@ type TelemetryEvent =
   | 'business_analysis_started' | 'business_analysis_completed' | 'business_analysis_failed'
   | 'opportunity_opened' | 'opportunity_approved' | 'opportunity_discarded'
   | 'next_best_action_opened'
-  | 'quick_action_clicked' | 'automation_opened' | 'alert_opened';
+  | 'quick_action_clicked' | 'automation_opened' | 'alert_opened'
+  | 'analysis_started' | 'analysis_completed' | 'analysis_failed' | 'analysis_cancelled'
+  | 'opportunity_created' | 'opportunity_approved' | 'opportunity_rejected' | 'opportunity_updated'
+  | 'analysis_opened' | 'analysis_deleted' | 'copilot_opened' | 'automation_created';
 
 const FORBIDDEN_KEYS = ['password', 'token', 'apiKey', 'api_key', 'secret', 'authorization'];
 

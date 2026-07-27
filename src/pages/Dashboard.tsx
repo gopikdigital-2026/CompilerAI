@@ -3,6 +3,7 @@ import { Sidebar, type DashboardPage } from '../components/dashboard/Sidebar';
 import { Topbar } from '../components/dashboard/Topbar';
 
 const HomeDashboard      = React.lazy(() => import('./dashboard/Home').then(m => ({ default: m.HomeDashboard })));
+const AnalysisPage        = React.lazy(() => import('./dashboard/AnalysisPage').then(m => ({ default: m.AnalysisPage })));
 const RealityCompiler    = React.lazy(() => import('./dashboard/Compiler').then(m => ({ default: m.RealityCompiler })));
 const WorkflowRunner     = React.lazy(() => import('./dashboard/WorkflowRunner').then(m => ({ default: m.WorkflowRunner })));
 const MemoryCenter       = React.lazy(() => import('./dashboard/MemoryCenter').then(m => ({ default: m.MemoryCenter })));
@@ -27,9 +28,10 @@ function PageFallback() {
   );
 }
 
-function PageContent({ page, initialSection }: { page: DashboardPage; initialSection?: string }) {
+function PageContent({ page, initialSection, onNavigate }: { page: DashboardPage; initialSection?: string; onNavigate?: (page: DashboardPage) => void }) {
   switch (page) {
-    case 'home':         return <HomeDashboard />;
+    case 'home':         return <HomeDashboard onNavigate={onNavigate} />;
+    case 'analysis':     return <AnalysisPage />;
     case 'compiler':     return <RealityCompiler />;
     case 'runner':       return <WorkflowRunner />;
     case 'memory':       return <MemoryCenter />;
@@ -75,7 +77,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
         />
         <main className={`flex-1 bg-surface-900 min-h-0 ${FULL_HEIGHT_PAGES.includes(currentPage) ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
           <Suspense fallback={<PageFallback />}>
-            <PageContent page={currentPage} initialSection={settingsSection} />
+            <PageContent page={currentPage} initialSection={settingsSection} onNavigate={handleNavigate} />
           </Suspense>
         </main>
       </div>

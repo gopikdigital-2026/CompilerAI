@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   LayoutDashboard, Cpu, Bot, GitBranch, Plug, Store, Activity,
-  Settings, ChevronLeft, ChevronRight, LogOut, HelpCircle, PlayCircle, Brain, Sparkles, Wand2, Workflow, Building2,
+  Settings, ChevronLeft, ChevronRight, LogOut, HelpCircle, PlayCircle, Brain, Sparkles, Wand2, Workflow, Building2, Zap,
 } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 
 export type DashboardPage =
-  | 'home' | 'compiler' | 'runner' | 'memory' | 'brain' | 'prompt' | 'designer' | 'enterprise' | 'agents' | 'workflows'
+  | 'home' | 'analysis' | 'compiler' | 'runner' | 'memory' | 'brain' | 'prompt' | 'designer' | 'enterprise' | 'agents' | 'workflows'
   | 'integrations' | 'marketplace' | 'monitor' | 'settings';
 
 interface SidebarProps {
@@ -26,6 +26,7 @@ export function Sidebar({ current, onNavigate, onLogout }: SidebarProps) {
 
   const NAV_ITEMS: { id: DashboardPage; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: 'home',         label: t.sidebar.home,         icon: <LayoutDashboard size={18} /> },
+    { id: 'analysis',     label: t.sidebar.analysis ?? 'Analyze', icon: <Zap size={18} />, badge: t.common.new },
     { id: 'compiler',     label: t.sidebar.compiler,     icon: <Cpu size={18} />, badge: t.common.beta },
     { id: 'runner',       label: t.sidebar.runner ?? 'Runner', icon: <PlayCircle size={18} />, badge: t.common.beta },
     { id: 'memory',       label: t.sidebar.memory ?? 'Memory', icon: <Brain size={18} />, badge: t.common.new },

@@ -19,7 +19,9 @@ import { ConnectorsSection } from '../../components/dashboard/ConnectorsSection'
 import { QuickActions } from '../../components/dashboard/QuickActions';
 import { RunsChart } from '../../components/dashboard/RunsChart';
 
-export function HomeDashboard() {
+interface HomeDashboardProps { onNavigate?: (page: string) => void }
+
+export function HomeDashboard({ onNavigate }: HomeDashboardProps = {}) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -47,8 +49,9 @@ export function HomeDashboard() {
     dashboard.changePeriod(p);
   };
 
-  const handleAnalyze = () => {
+  const goToAnalysis = () => {
     track('business_analysis_started', { org_id: activeOrg?.id });
+    onNavigate?.('analysis');
   };
   const handleConnectData = () => {
     track('data_source_connect_started', { org_id: activeOrg?.id });
@@ -128,7 +131,7 @@ export function HomeDashboard() {
           <p className="text-sm text-neutral-400 mb-6">{t.dashboard.welcomeNewDesc}</p>
           <button
             data-testid="start-analysis-button"
-            onClick={() => { handleAnalyze(); window.location.hash = '#settings/integrations'; }}
+            onClick={() => { goToAnalysis(); }}
             className="btn-primary text-sm flex items-center gap-2"
           >
             {t.dashboard.connectFirst}
@@ -136,10 +139,10 @@ export function HomeDashboard() {
         </div>
 
         <QuickActions
-          onAnalyze={() => { handleAnalyze(); handleQuickAction('analyze'); }}
+          onAnalyze={() => { goToAnalysis(); handleQuickAction('analyze'); }}
           onConnectData={() => { handleConnectData(); handleQuickAction('connect_data'); window.location.hash = '#settings/integrations'; }}
           onAskCopilot={() => handleQuickAction('ask_copilot')}
-          onCreateAutomation={() => handleQuickAction('create_automation')}
+          onCreateAutomation={() => { handleQuickAction('create_automation'); onNavigate?.('designer'); }}
           onImportFiles={() => handleQuickAction('import_files')}
           onReviewOpportunities={() => handleQuickAction('review_opportunities')}
           onInviteTeam={() => { handleQuickAction('invite_team'); window.location.hash = '#settings/team'; }}
@@ -210,7 +213,7 @@ export function HomeDashboard() {
 
       {/* 8. Quick actions */}
       <QuickActions
-        onAnalyze={() => { handleAnalyze(); handleQuickAction('analyze'); }}
+        onAnalyze={() => { goToAnalysis(); handleQuickAction('analyze'); }}
         onConnectData={() => { handleConnectData(); handleQuickAction('connect_data'); window.location.hash = '#settings/integrations'; }}
         onAskCopilot={() => handleQuickAction('ask_copilot')}
         onCreateAutomation={() => handleQuickAction('create_automation')}
