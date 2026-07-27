@@ -94,3 +94,67 @@ export interface AnalysisValidation {
   valid: boolean;
   errors: AnalysisValidationError[];
 }
+
+// ── Executive Report Types ──────────────────────────────────────────────────
+
+export interface HealthScoreDimension {
+  id: string;
+  label: string;
+  score: number;
+  weight: number;
+  sources: string[];
+  confidence: number;
+  description: string;
+}
+
+export interface HealthScoreResult {
+  score: number;
+  label: string;
+  trend: 'up' | 'down' | 'stable' | 'unknown';
+  dimensions: HealthScoreDimension[];
+  calculationMethod: string;
+  sourcesUsed: string[];
+  confidence: number;
+}
+
+export interface ExecutiveReportSection {
+  question: string;
+  answer: string;
+  evidence: ReportEvidence[];
+}
+
+export interface ReportEvidence {
+  source: string;
+  date: string;
+  quality: 'high' | 'medium' | 'low';
+  confidence: number;
+  metric: string;
+}
+
+export interface ExecutiveReport {
+  what: ExecutiveReportSection;
+  why: ExecutiveReportSection;
+  impact: ExecutiveReportSection;
+  whatToDo: ExecutiveReportSection;
+  whatHappensIfNothing: ExecutiveReportSection;
+  nextBestAction: string;
+  economicImpact: string;
+  readabilityTime: string;
+}
+
+export interface DataQualityAssessment {
+  level: 'high' | 'medium' | 'low' | 'insufficient';
+  label: string;
+  sourcesCount: number;
+  recordsCount: number;
+  description: string;
+}
+
+export interface ExecutiveReportData {
+  healthScore: HealthScoreResult;
+  report: ExecutiveReport;
+  dataQuality: DataQualityAssessment;
+  weaknesses: string[];
+  nextBestAction: string;
+  economicImpact: string;
+}

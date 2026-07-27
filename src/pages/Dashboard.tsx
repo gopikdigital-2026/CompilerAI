@@ -4,6 +4,7 @@ import { Topbar } from '../components/dashboard/Topbar';
 
 const HomeDashboard      = React.lazy(() => import('./dashboard/Home').then(m => ({ default: m.HomeDashboard })));
 const AnalysisPage        = React.lazy(() => import('./dashboard/AnalysisPage').then(m => ({ default: m.AnalysisPage })));
+const ExecutiveReportPage  = React.lazy(() => import('./dashboard/ExecutiveReport').then(m => ({ default: m.ExecutiveReportPage })));
 const RealityCompiler    = React.lazy(() => import('./dashboard/Compiler').then(m => ({ default: m.RealityCompiler })));
 const WorkflowRunner     = React.lazy(() => import('./dashboard/WorkflowRunner').then(m => ({ default: m.WorkflowRunner })));
 const MemoryCenter       = React.lazy(() => import('./dashboard/MemoryCenter').then(m => ({ default: m.MemoryCenter })));
@@ -31,7 +32,8 @@ function PageFallback() {
 function PageContent({ page, initialSection, onNavigate }: { page: DashboardPage; initialSection?: string; onNavigate?: (page: DashboardPage) => void }) {
   switch (page) {
     case 'home':         return <HomeDashboard onNavigate={onNavigate} />;
-    case 'analysis':     return <AnalysisPage />;
+    case 'analysis':     return <AnalysisPage onNavigate={onNavigate} />;
+    case 'report':       return <ExecutiveReportPage />;
     case 'compiler':     return <RealityCompiler />;
     case 'runner':       return <WorkflowRunner />;
     case 'memory':       return <MemoryCenter />;

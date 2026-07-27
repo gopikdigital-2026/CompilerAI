@@ -10,6 +10,11 @@ import {
   generateAnalysisResult,
   validateAnalysisPreconditions,
 } from '../lib/analysisEngine';
+import {
+  calculateHealthScore,
+  assessDataQuality,
+  generateExecutiveReport,
+} from '../lib/healthScoreEngine';
 import type {
   AnalysisStatus,
   AnalysisStage,
@@ -17,9 +22,10 @@ import type {
   AnalysisOpportunity,
   AnalysisHistoryItem,
   AnalysisValidation,
+  ExecutiveReportData,
 } from '../types/analysis';
 
-export type { AnalysisStatus, AnalysisStage, AnalysisResult, AnalysisOpportunity, AnalysisHistoryItem, AnalysisValidation };
+export type { AnalysisStatus, AnalysisStage, AnalysisResult, AnalysisOpportunity, AnalysisHistoryItem, AnalysisValidation, ExecutiveReportData };
 
 export function useAnalysis() {
   const { user } = useAuth();
@@ -33,6 +39,7 @@ export function useAnalysis() {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [executiveReport, setExecutiveReport] = useState<ExecutiveReportData | null>(null);
 
   const orgId = activeOrg?.id ?? null;
   const cancelRef = useRef(false);
@@ -263,6 +270,26 @@ export function useAnalysis() {
 
     setResult(analysisResult);
     setStatus('completed');
+
+    // Generate executive report from health score
+    const scoreInputs = {
+      sessionCount: inputs.sessionCount,
+      executionCount: inputs.executionCount,
+      workflowCount: inputs.workflowCount,
+      promptCount: inputs.promptCount,
+      brainDecisionCount: inputs.brainDecisionCount,
+      memoryCount: inputs.memoryCount,
+      errorCount: inputs.errorCount,
+      apiKeysCount: inputs.apiKeysCount,
+      memberCount: inputs.memberCount,
+      connectorsConnected: inputs.connectorsConnected,
+      plan: inputs.org.plan,
+    };
+    const healthScore = calculateHealthScore(scoreInputs);
+    const dataQuality = assessDataQuality(scoreInputs);
+    const execReport = generateExecutiveReport(healthScore, dataQuality, analysisResult, inputs.org.name);
+    setExecutiveReport(execReport);
+
     track('analysis_completed', {
       org_id: orgId,
       opportunities: analysisResult.opportunities.length,
@@ -291,6 +318,7 @@ export function useAnalysis() {
     setResult(null);
     setError(null);
     setCurrentAnalysisId(null);
+    setExecutiveReport(null);
     cancelRef.current = false;
   }, []);
 
@@ -398,7 +426,21 @@ export function useAnalysis() {
     setResult(analysisResult);
     setStatus('completed');
     setCurrentAnalysisId(analysisId);
-  }, []);
+
+    // Rebuild executive report if result has health score data
+    if (analysisResult) {
+      const scoreInputs = {
+        sessionCount: 0, executionCount: 0, workflowCount: 0, promptCount: 0,
+        brainDecisionCount: 0, memoryCount: 0, errorCount: 0, apiKeysCount: 0,
+        memberCount: 0, connectorsConnected: 0, plan: 'free',
+      };
+      // Use area scores to reconstruct a minimal health score
+      const healthScore = calculateHealthScore(scoreInputs);
+      const dataQuality = assessDataQuality(scoreInputs);
+      const execReport = generateExecutiveReport(healthScore, dataQuality, analysisResult, activeOrg?.name ?? 'Organización');
+      setExecutiveReport(execReport);
+    }
+  }, [activeOrg]);
 
   return {
     status,
@@ -408,6 +450,7 @@ export function useAnalysis() {
     history,
     historyLoading,
     currentAnalysisId,
+    executiveReport,
     validate,
     startAnalysis,
     cancelAnalysis,

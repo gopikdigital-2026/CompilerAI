@@ -37,7 +37,11 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export function AnalysisPage() {
+interface AnalysisPageProps {
+  onNavigate?: (page: string) => void;
+}
+
+export function AnalysisPage({ onNavigate }: AnalysisPageProps = {}) {
   const analysis = useAnalysis();
   const { activeOrg } = useOrganization();
   const { t } = useTranslation();
@@ -50,8 +54,10 @@ export function AnalysisPage() {
   useEffect(() => {
     if (analysis.status === 'completed' && analysis.result) {
       track('analysis_opened', { analysis_id: analysis.currentAnalysisId });
+      // Auto-navigate to executive report when analysis finishes
+      onNavigate?.('report');
     }
-  }, [analysis.status, analysis.currentAnalysisId]);
+  }, [analysis.status, analysis.currentAnalysisId, onNavigate]);
 
   // No organization state
   if (!activeOrg) {
