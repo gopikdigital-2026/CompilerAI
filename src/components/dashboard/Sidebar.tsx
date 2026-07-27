@@ -82,6 +82,7 @@ export function Sidebar({ current, onNavigate, onLogout }: SidebarProps) {
       {/* Bottom actions */}
       <div className="p-3 border-t border-surface-700 space-y-1">
         <button
+          onClick={() => window.open('https://docs.compilerai.io', '_blank', 'noopener,noreferrer')}
           className={`w-full nav-item-inactive ${collapsed ? 'justify-center px-0' : ''}`}
           title={collapsed ? t.sidebar.help : undefined}
         >

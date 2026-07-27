@@ -70,7 +70,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar
           currentPage={currentPage}
-          onNavigate={(p) => handleNavigateToSettings(p, undefined)}
+          onNavigate={handleNavigateToSettings}
           onLogout={onLogout}
         />
         <main className={`flex-1 bg-surface-900 min-h-0 ${FULL_HEIGHT_PAGES.includes(currentPage) ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>

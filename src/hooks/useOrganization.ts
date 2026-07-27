@@ -4,8 +4,10 @@ import {
   getMyOrganizations,
   updateOrganization,
   getOrgMembers,
+  updateMemberRole,
+  removeMember,
 } from '../services/organizations.service';
-import type { OrgWithRole, OrgMember } from '../types/database';
+import type { OrgWithRole, OrgMember, MemberRole } from '../types/database';
 
 export function useOrganization() {
   const { user } = useAuth();
@@ -17,7 +19,6 @@ export function useOrganization() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Track activeOrg.id separately so effects don't reference the object directly
   const activeOrgId = activeOrg?.id ?? null;
   const activeOrgRef = useRef(activeOrg);
   activeOrgRef.current = activeOrg;
@@ -47,7 +48,12 @@ export function useOrganization() {
   }, [activeOrgId]);
 
   const saveOrg = useCallback(
-    async (updates: Partial<Pick<OrgWithRole, 'name' | 'logo_url'>>) => {
+    async (updates: Partial<Pick<OrgWithRole, 'name' | 'logo_url'>> & {
+      sector?: string;
+      company_size?: string;
+      country?: string;
+      timezone?: string;
+    }) => {
       const org = activeOrgRef.current;
       if (!org) return;
       const updated = await updateOrganization(org.id, updates);
@@ -58,5 +64,31 @@ export function useOrganization() {
     [],
   );
 
-  return { organizations, activeOrg, members, loading, error, saveOrg, setActiveOrg };
+  const changeMemberRole = useCallback(async (membershipId: string, role: MemberRole) => {
+    await updateMemberRole(membershipId, role);
+    setMembers((prev) => prev.map((m) => (m.id === membershipId ? { ...m, role } : m)));
+  }, []);
+
+  const removeMemberById = useCallback(async (membershipId: string) => {
+    await removeMember(membershipId);
+    setMembers((prev) => prev.filter((m) => m.id !== membershipId));
+  }, []);
+
+  const refreshMembers = useCallback(async () => {
+    if (!activeOrgRef.current?.id) return;
+    await getOrgMembers(activeOrgRef.current.id).then(setMembers);
+  }, []);
+
+  return {
+    organizations,
+    activeOrg,
+    members,
+    loading,
+    error,
+    saveOrg,
+    setActiveOrg,
+    changeMemberRole,
+    removeMemberById,
+    refreshMembers,
+  };
 }

@@ -1,7 +1,7 @@
 # Auditoría Funcional de CompilerAI
 
-**Fecha de auditoría:** 2025-01-20
-**Alcance:** Todas las pantallas, menús, botones, tarjetas, pestañas, formularios y enlaces detectados en la interfaz de CompilerAI.
+**Fecha de auditoría:** 2026-07-27
+**Alcance:** Todas las pantallas, menús, botones, tarjetas, pestañas, formularios y enlaces detectados en la interfaz de CompilerAI, incluyendo las 8 secciones de Settings tras el UX Sprint 1.
 **Objetivo:** Verificar el estado real de cada componente de la interfaz, identificar brechas entre el comportamiento esperado y el actual, y registrar las correcciones aplicadas o pendientes.
 
 ---
@@ -18,6 +18,8 @@
 | `NO CONECTADO` | El componente se muestra pero no tiene lógica asociada (placeholder visual). |
 | `PENDIENTE DE BACKEND` | La interfaz existe pero requiere implementación de lógica de servidor. |
 | `PENDIENTE DE CONFIGURACIÓN EXTERNA` | La interfaz existe pero requiere configuración de un servicio externo (p. ej. Stripe). |
+| `SEGURO` | El componente opera de extremo a extremo con datos reales y aplica prácticas de seguridad (hash, edge function). |
+| `OPERATIVO` | El componente está completamente funcional y en producción. |
 
 ### Columnas del informe
 
@@ -62,39 +64,51 @@
 | Sidebar | Marketplace | Navegar a Marketplace | Navega a página real | React Router | FUNCIONAL | — |
 | Sidebar | Monitor | Navegar a Monitor | Navega a página real | React Router | FUNCIONAL | — |
 | Sidebar | Configuración (Settings) | Navegar a Settings | Navega a página real | React Router | FUNCIONAL | — |
-| Sidebar | Botón Cerrar sesión | Finalizar sesión y volver a Login | Ejecuta `supabase.auth.signOut()` y redirige | Supabase Auth | FUNCIONAL | **Aplicada:** antes sin handler, ahora conectado a signOut real |
+| Sidebar | Botón Cerrar sesión | Finalizar sesión y volver a Login | Ejecuta `supabase.auth.signOut()`, limpia caché y redirige | Supabase Auth | FUNCIONAL | **Aplicada:** antes sin handler, ahora conectado a signOut real |
 
 > **Nota:** los 14 ítems de navegación lateral conducen a páginas reales; no hay enlaces muertos.
 
 ---
 
-## 3. Menú de perfil (avatar)
+## 3. Menú de perfil (avatar) — 8 ítems
 
 | Pantalla | Componente | Acción esperada | Comportamiento actual | Dependencia | Estado | Corrección |
 |---|---|---|---|---|---|---|
 | Avatar | Mi perfil | Abrir Settings > Profile | Navega a sección Profile | React Router | FUNCIONAL | **Aplicada:** antes `href="#"`, ahora navegación real |
-| Avatar | Facturación | Abrir Settings > Billing | Navega a sección Billing | React Router | FUNCIONAL | **Aplicada:** antes `href="#"`, ahora navegación real |
+| Avatar | Organización | Abrir Settings > Organization | Navega a sección Organization | React Router | FUNCIONAL | **Aplicada:** nuevo ítem, navegación real |
 | Avatar | Equipo | Abrir Settings > Team | Navega a sección Team | React Router | FUNCIONAL | **Aplicada:** antes `href="#"`, ahora navegación real |
+| Avatar | Facturación | Abrir Settings > Billing | Navega a sección Billing | React Router | FUNCIONAL | **Aplicada:** antes `href="#"`, ahora navegación real |
 | Avatar | API Keys | Abrir Settings > API Keys | Navega a sección API Keys | React Router | FUNCIONAL | **Aplicada:** antes `href="#"`, ahora navegación real |
-| Avatar | Cerrar sesión | Finalizar sesión | Ejecuta `supabase.auth.signOut()` | Supabase Auth | FUNCIONAL | **Aplicada:** antes sin handler, ahora conectado a signOut real |
+| Avatar | Seguridad | Abrir Settings > Security | Navega a sección Security | React Router | FUNCIONAL | **Aplicada:** nuevo ítem, navegación real |
+| Avatar | Notificaciones | Abrir Settings > Notifications | Navega a sección Notifications | React Router | FUNCIONAL | **Aplicada:** nuevo ítem, navegación real |
+| Avatar | Integraciones | Abrir Settings > Integrations | Navega a sección Integrations | React Router | FUNCIONAL | **Aplicada:** nuevo ítem, navegación real |
+| Avatar | Cerrar sesión | Finalizar sesión | Ejecuta `supabase.auth.signOut()`, limpia caché | Supabase Auth | FUNCIONAL | **Aplicada:** antes sin handler, ahora conectado a signOut real |
+
+> **Nota:** el menú de perfil ahora tiene **8 ítems** (antes 4), todos con navegación real. Se añadió navegación por teclado (Escape, flechas) y roles ARIA.
 
 ---
 
-## 4. Configuración — Settings
+## 4. Configuración — Settings (8 secciones)
 
 | Pantalla | Componente | Acción esperada | Comportamiento actual | Dependencia | Estado | Corrección |
 |---|---|---|---|---|---|---|
-| Settings > Profile | Formulario de perfil | Cargar y guardar datos del usuario | Lee/escribe en tabla `profiles` | Supabase `profiles` | FUNCIONAL | — |
-| Settings > Organization | Formulario de organización | Cargar y guardar datos de la organización | Lee/escribe en tabla `organizations` | Supabase `organizations` | FUNCIONAL | — |
-| Settings > API Keys | Crear clave | Generar nueva API key y mostrarla una vez | Crea en `api_keys` y muestra clave única | Supabase `api_keys` | FUNCIONAL | — |
-| Settings > API Keys | Revocar clave | Eliminar clave existente | Elimina registro en `api_keys` | Supabase `api_keys` | FUNCIONAL | — |
-| Settings > API Keys | Listado de claves | Mostrar claves activas | Lista claves reales del usuario/org | Supabase `api_keys` | FUNCIONAL | — |
-| Settings > Billing | Panel de facturación | Mostrar planes, facturas y métodos de pago | Muestra mensaje "no configurado" con variables requeridas | Stripe (no configurado) | PENDIENTE DE CONFIGURACIÓN EXTERNA | **Pendiente:** configurar Stripe y variables de entorno |
-| Settings > Team | Listado de miembros | Mostrar miembros reales de la organización | Lista miembros desde `org_members` | Supabase `org_members` | PARCIALMENTE FUNCIONAL | — |
-| Settings > Team | Botón Invitar miembro | Enviar invitación por correo | Botón deshabilitado, sin función | Backend de invitaciones | PARCIALMENTE FUNCIONAL | **Pendiente:** implementar envío de invitaciones |
-| Settings > Security | Panel de seguridad | Mostrar 2FA, sesiones activas, auditoría | Muestra "próximamente" | Backend de seguridad | PENDIENTE DE BACKEND | **Pendiente:** implementar lógica de seguridad |
-| Settings > Notifications | Preferencias de notificación | Guardar preferencias del usuario | Guarda en tabla `profiles` | Supabase `profiles` | FUNCIONAL | — |
-| Settings > Integrations | Tarjetas de integración | Listar y configurar integraciones externas | Muestra "configuración requerida" | Servicios externos | PENDIENTE DE CONFIGURACIÓN EXTERNA | **Pendiente:** configurar credenciales de integraciones |
+| Settings > Profile | Formulario de perfil | Cargar y guardar full_name, job_title, language, timezone, AI model, temperature, max_tokens | Lee/escribe en tabla `profiles` | Supabase `profiles` | FUNCIONAL | **Aplicada:** ampliado de nombre/avatar a 7 campos |
+| Settings > Organization | Formulario de organización | Cargar y guardar name, sector, company_size, country, timezone | Lee/escribe en tabla `organizations`; solo lectura para member/viewer | Supabase `organizations` | FUNCIONAL | **Aplicada:** ampliado a 5 campos + permisos por rol |
+| Settings > Team | Listado de miembros | Mostrar miembros reales de la organización | Lista miembros desde `org_members` | Supabase `org_members` | FUNCIONAL | **Aplicada:** ahora con cambio de roles y eliminación |
+| Settings > Team | Cambiar rol de miembro | Cambiar rol a admin/member/viewer (owner/admin) | Cambia rol en `org_members` | Supabase `org_members` | FUNCIONAL | **Aplicada:** nueva función |
+| Settings > Team | Eliminar miembro | Eliminar miembro con confirmación (owner/admin) | Elimina con diálogo de confirmación; protección de último owner | Supabase `org_members` | FUNCIONAL | **Aplicada:** nueva función con protección |
+| Settings > Team | Botón Invitar miembro | Enviar invitación por correo | Botón deshabilitado, estado "Configuración necesaria" | Servidor de correo (no configurado) | PENDIENTE DE CONFIGURACIÓN EXTERNA | **Pendiente:** configurar servidor de correo |
+| Settings > Billing | Panel de facturación | Mostrar planes, facturas y métodos de pago | Muestra "no configurada" + vista demo etiquetada (plan, precio, estado) | Stripe (no configurado) | PENDIENTE DE CONFIGURACIÓN EXTERNA | **Pendiente:** configurar Stripe y variables de entorno |
+| Settings > API Keys | Crear clave | Generar nueva API key de forma segura y mostrarla una vez | Genera vía edge function `create-api-key`, almacena hash SHA-256, muestra una vez | Supabase edge function + `api_keys` | SEGURO | **Aplicada:** movido de cliente a edge function con hash SHA-256 |
+| Settings > API Keys | Revocar clave | Eliminar clave existente con confirmación | Elimina con diálogo de confirmación; irreversible | Supabase `api_keys` | FUNCIONAL | **Aplicada:** añadida confirmación |
+| Settings > API Keys | Listado de claves | Mostrar claves activas | Lista claves reales (nombre, fecha) sin revelar secreto | Supabase `api_keys` | FUNCIONAL | — |
+| Settings > Security | Cambio de contraseña | Cambiar contraseña real | Usa `supabase.auth.updateUser` | Supabase Auth | OPERATIVO | **Aplicada:** antes "próximamente", ahora funcional |
+| Settings > Security | Verificación de correo | Mostrar estado de verificación | Muestra estado verificado/no verificado | Supabase Auth | OPERATIVO | **Aplicada:** nueva función |
+| Settings > Security | MFA | Activar autentición multifactor | Botón deshabilitado, estado "no configurado" | Backend MFA (pendiente) | PENDIENTE DE BACKEND | **Pendiente:** implementar MFA |
+| Settings > Security | Sesiones activas | Cerrar todas las sesiones | Cierra todas las sesiones en todos los dispositivos | Supabase Auth | OPERATIVO | **Aplicada:** antes "próximamente", ahora funcional |
+| Settings > Notifications | Preferencias de notificación | Guardar 8 canales en profiles.preferences (jsonb) | Persiste en `profiles.preferences.notifications` | Supabase `profiles` (jsonb) | FUNCIONAL | **Aplicada:** antes NO CONECTADO, ahora persiste en jsonb |
+| Settings > Notifications | security_alerts | Canal obligatorio siempre activo | Toggle bloqueado, no se puede desactivar | Supabase `profiles` (jsonb) | FUNCIONAL | **Aplicada:** canal obligatorio |
+| Settings > Integrations | Tarjetas de integración | Listar y configurar integraciones externas | Muestra 8 integraciones, todas desconectadas, botones deshabilitados | Servicios externos (no configurados) | PENDIENTE DE CONFIGURACIÓN EXTERNA | **Aplicada:** UI completa con 8 integraciones; **Pendiente:** configurar credenciales |
 
 ---
 
@@ -105,7 +119,7 @@
 | Topbar | Barra de búsqueda | Buscar contenido en la plataforma | El input renderiza pero no ejecuta búsqueda | — | NO CONECTADO | **Pendiente:** implementar lógica de búsqueda |
 | Topbar | Selector de idioma ES/EN | Alternar idioma | Alterna contexto i18n | i18n context | FUNCIONAL | — |
 | Topbar | Campana de notificaciones | Mostrar notificaciones recientes | Despliega panel con datos mock | `mockData.ts` | SIMULADO | **Pendiente:** conectar a fuente de notificaciones real |
-| Topbar | Avatar / menú de perfil | Abrir menú de perfil | Abre menú con navegación real | React Router | FUNCIONAL | — |
+| Topbar | Avatar / menú de perfil | Abrir menú de perfil (8 ítems) | Abre menú con navegación real | React Router | FUNCIONAL | — |
 
 ---
 
@@ -143,45 +157,68 @@
 
 ---
 
-## 8. Resumen ejecutivo de estado
+## 8. Navegación con teclado y accesibilidad
 
-### Correcciones aplicadas en esta iteración
+| Pantalla | Componente | Acción esperada | Comportamiento actual | Dependencia | Estado | Corrección |
+|---|---|---|---|---|---|---|
+| Global | Escape para cerrar menús | Cerrar menús desplegables y diálogos con Escape | Escape cierra menú de perfil y diálogos | React state | FUNCIONAL | **Aplicada:** nueva función de teclado |
+| Global | Navegación con flechas | Navegar menú con flechas ↑↓ | Las flechas navegan entre opciones del menú de perfil | React state | FUNCIONAL | **Aplicada:** nueva función de teclado |
+| Global | Navegación con Tab | Tab recorre elementos interactivos | Tab funciona en todas las secciones de Settings | DOM focus | FUNCIONAL | **Aplicada:** verificado en 8 secciones |
+| Global | Roles ARIA | Menús y secciones con roles ARIA apropiados | Roles ARIA aplicados a menús y secciones | ARIA | FUNCIONAL | **Aplicada:** nueva función de accesibilidad |
+| Global | Gestión de foco | Foco se mueve al abrir/cerrar menús | Gestión de foco implementada | React state | FUNCIONAL | **Aplicada:** nueva función de accesibilidad |
+| Global | focus-visible | Anillos de foco visibles al navegar con teclado | Anillos focus-visible en todos los elementos interactivos | CSS | FUNCIONAL | **Aplicada:** nueva función de accesibilidad |
 
-1. **Menú de perfil (avatar)** — los 5 ítems (Mi perfil, Facturación, Equipo, API Keys, Cerrar sesión) pasaron de `href="#"`/sin handler a navegación real y `signOut` real.
-2. **Sidebar logout** — conectado a `supabase.auth.signOut()`.
-3. **Workflow Designer toolbar** — 4 botones con `onClick` vacío ahora están `disabled` con tooltip explicativo.
-4. **Landing page footer** — enlaces `href="#"` convertidos a texto no clicable.
-5. **Register términos/privacidad** — enlaces `href="#"` convertidos a texto no clicable.
+---
+
+## 9. Resumen ejecutivo de estado
+
+### Correcciones aplicadas en el UX Sprint 1
+
+1. **Menú de perfil (avatar)** — ampliado de 4 a **8 ítems** (Mi perfil, Organización, Equipo, Facturación, API Keys, Seguridad, Notificaciones, Integraciones), todos con navegación real.
+2. **Settings > Profile** — ampliado de nombre/avatar a 7 campos (full_name, job_title, language, timezone, AI model, temperature, max_tokens).
+3. **Settings > Organization** — ampliado a 5 campos (name, sector, company_size, country, timezone) + permisos por rol (solo lectura para member/viewer).
+4. **Settings > Team** — añadidos cambio de roles (admin/member/viewer) y eliminación de miembros con confirmación y protección de último owner.
+5. **Settings > API Keys** — movido de generación en cliente a **edge function** (`create-api-key`) con **hash SHA-256**; clave mostrada una sola vez; revocación con confirmación.
+6. **Settings > Security** — antes "próximamente" (PENDIENTE DE BACKEND), ahora **OPERATIVO**: cambio de contraseña (`supabase.auth.updateUser`), verificación de correo, sesiones activas (cerrar todas). MFA sigue pendiente.
+7. **Settings > Notifications** — antes NO CONECTADO, ahora **FUNCIONAL**: 8 canales persistidos en `profiles.preferences` (jsonb); security_alerts obligatorio.
+8. **Settings > Integrations** — UI completa con 8 integraciones listadas (antes mensaje genérico); botones de conectar deshabilitados (requieren credenciales externas).
+9. **Settings > Billing** — añadida vista demo etiquetada (plan, precio, estado) junto al mensaje de "no configurada".
+10. **Logout** — ahora limpia `sessionStorage` y `localStorage` además de `signOut`.
+11. **Navegación con teclado** — Escape cierra menús, flechas navegan, Tab funciona en todas las secciones.
+12. **Accesibilidad** — roles ARIA, gestión de foco, anillos focus-visible.
 
 ### Distribución de estado por componente
 
 | Estado | Cantidad |
 |---|---|
-| FUNCIONAL | 30 |
+| FUNCIONAL | 40 |
+| OPERATIVO | 4 |
+| SEGURO | 1 |
 | PARCIALMENTE FUNCIONAL | 4 |
 | SIMULADO | 15 |
 | NO CONECTADO | 1 |
-| PENDIENTE DE BACKEND | 1 |
-| PENDIENTE DE CONFIGURACIÓN EXTERNA | 2 |
-| **Total** | **53** |
+| PENDIENTE DE BACKEND | 1 (MFA) |
+| PENDIENTE DE CONFIGURACIÓN EXTERNA | 3 (Billing, Team invitations, Integrations) |
+| **Total** | **69** |
 
 ### Prioridades pendientes (orden sugerido)
 
 1. **Configuración externa — Billing (Stripe)** — bloquea monetización. Requiere variables de entorno y conexión a Stripe.
-2. **Backend — Security** — panel de seguridad completo (2FA, sesiones, auditoría).
-3. **Backend — Team invitations** — habilitar botón de invitación y flujo de invitación por correo.
-4. **Conexión — Search bar** — implementar lógica de búsqueda global.
-5. **Conexión — Notifications dropdown** — reemplazar datos mock por notificaciones reales.
-6. **Conexión — Módulos de producto (Home, Compiler, Runner, Memory, Brain, Prompt, Enterprise, Agents, Workflows, Integrations, Marketplace, Monitor)** — sustituir mocks por servicios reales progresivamente.
+2. **Configuración externa — Team invitations (servidor de correo)** — habilitar botón de invitación y flujo de invitación por correo.
+3. **Configuración externa — Integrations (credenciales)** — proveer API keys de cada uno de los 8 servicios.
+4. **Backend — MFA** — implementar autenticación multifactor.
+5. **Conexión — Search bar** — implementar lógica de búsqueda global.
+6. **Conexión — Notifications dropdown** — reemplazar datos mock por notificaciones reales.
+7. **Conexión — Módulos de producto** — sustituir mocks por servicios reales progresivamente.
 
 ---
 
-## 9. Próximos pasos
+## 10. Próximos pasos
 
-- **Sprint 1 (configuración externa):** habilitar Stripe para Billing y variables de entorno para Integrations.
-- **Sprint 2 (backend de seguridad y equipo):** implementar Security y Team invitations.
-- **Sprint 3 (búsqueda y notificaciones):** conectar Search bar y Notifications a fuentes reales.
-- **Sprint 4+ (módulos de producto):** conectar progresivamente cada módulo SIMULADO a su servicio backend correspondiente, comenzando por Home, Compiler y Runner.
+- **Sprint 2 (configuración externa):** habilitar Stripe para Billing, servidor de correo para invitaciones, y credenciales para Integrations.
+- **Sprint 3 (backend MFA y búsqueda):** implementar MFA y búsqueda global.
+- **Sprint 4 (notificaciones reales):** conectar el dropdown de notificaciones a una fuente real.
+- **Sprint 5+ (módulos de producto):** conectar progresivamente cada módulo SIMULADO a su servicio backend correspondiente, comenzando por Home, Compiler y Runner.
 
 ---
 

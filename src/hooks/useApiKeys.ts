@@ -5,21 +5,24 @@ import type { ApiKey } from '../types/database';
 export function useApiKeys(organizationId: string | undefined) {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!organizationId) { setApiKeys([]); setLoading(false); return; }
     setLoading(true);
+    setError(null);
     getApiKeys(organizationId)
       .then(setApiKeys)
+      .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [organizationId]);
 
   const create = useCallback(
-    async (name: string): Promise<ApiKey | undefined> => {
+    async (name: string): Promise<{ apiKey: ApiKey; secret: string } | undefined> => {
       if (!organizationId) return;
-      const key = await createApiKey(organizationId, name);
-      setApiKeys((prev) => [key, ...prev]);
-      return key;
+      const result = await createApiKey(organizationId, name);
+      setApiKeys((prev) => [result.apiKey, ...prev]);
+      return result;
     },
     [organizationId],
   );
@@ -29,5 +32,5 @@ export function useApiKeys(organizationId: string | undefined) {
     setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
   }, []);
 
-  return { apiKeys, loading, create, revoke };
+  return { apiKeys, loading, error, create, revoke };
 }

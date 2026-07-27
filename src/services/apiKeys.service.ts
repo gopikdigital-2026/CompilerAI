@@ -4,36 +4,39 @@ import type { ApiKey } from '../types/database';
 export const getApiKeys = async (organizationId: string): Promise<ApiKey[]> => {
   const { data, error } = await supabase
     .from('api_keys')
-    .select('id, organization_id, name, key_preview, created_by, last_used_at, created_at')
+    .select('id, organization_id, name, key_preview, created_by, last_used_at, created_at, expires_at, revoked_at, scopes')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as ApiKey[];
 };
 
-const generateKeyPreview = (): { preview: string; hash: string } => {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const rand = (len: number) =>
-    Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  const suffix = rand(8);
-  const full = `rc_live_${rand(16)}${suffix}`;
-  return { preview: `rc_live_sk_••••••••••••${suffix}`, hash: full };
-};
+export const createApiKey = async (organizationId: string, name: string): Promise<{ apiKey: ApiKey; secret: string }> => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error('No authenticated session');
 
-export const createApiKey = async (organizationId: string, name: string): Promise<ApiKey> => {
-  const { preview, hash } = generateKeyPreview();
-  const { data, error } = await supabase
-    .from('api_keys')
-    .insert({
-      organization_id: organizationId,
-      name,
-      key_preview: preview,
-      key_hash: hash,
-    })
-    .select('id, organization_id, name, key_preview, created_by, last_used_at, created_at')
-    .single();
-  if (error) throw error;
-  return data as ApiKey;
+  const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-api-key`;
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ organizationId, name }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(err.error || `Request failed (${response.status})`);
+  }
+
+  const result = await response.json();
+  if (!result.apiKey || !result.secret) {
+    throw new Error('Invalid response from key creation service');
+  }
+
+  return { apiKey: result.apiKey as ApiKey, secret: result.secret as string };
 };
 
 export const deleteApiKey = async (keyId: string): Promise<void> => {

@@ -36,17 +36,16 @@ function AppRouter() {
   };
 
   if (!user) {
-    if (authView === 'register') {
-      return <Register onNavigate={handleAuthNavigate} />;
-    }
-    if (authView === 'forgot') {
-      return <ForgotPassword onNavigate={handleAuthNavigate} />;
-    }
+    if (authView === 'register') return <Register onNavigate={handleAuthNavigate} />;
+    if (authView === 'forgot') return <ForgotPassword onNavigate={handleAuthNavigate} />;
     return <Login onNavigate={handleAuthNavigate} />;
   }
 
   const handleLogout = async () => {
     await signOut();
+    // Clear any cached state
+    try { sessionStorage.clear(); } catch {}
+    try { localStorage.removeItem('rc-lang'); } catch {}
     setAuthView('login');
     window.location.hash = '';
   };

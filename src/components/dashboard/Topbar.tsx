@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Bell, ChevronDown, X, Globe } from 'lucide-react';
+import { Search, Bell, ChevronDown, X, Globe, User, Building2, Users, CreditCard, Key, Shield, Bell as BellIcon, Plug, LogOut } from 'lucide-react';
 import { MOCK_NOTIFICATIONS } from '../../lib/mockData';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -20,6 +20,8 @@ interface TopbarProps {
   onLogout: () => void;
 }
 
+type MenuSection = 'profile' | 'organization' | 'team' | 'billing' | 'api' | 'security' | 'notifications' | 'integrations';
+
 export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
   const { t } = useTranslation();
   const { lang, setLang } = useLanguage();
@@ -30,26 +32,29 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
   const [logoutError, setLogoutError] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-  const unread = MOCK_NOTIFICATIONS.filter((n) => !n.read).length;
+  const profileBtnRef = useRef<HTMLButtonElement>(null);
+  const menuRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [focusedIndex, setFocusedIndex] = useState(-1);
 
+  const unread = MOCK_NOTIFICATIONS.filter((n) => !n.read).length;
   const displayName = profile?.full_name || user?.email?.split('@')[0] || '—';
   const firstName = displayName.split(' ')[0];
 
   const pageTitleMap: Record<DashboardPage, string> = {
-    home:         t.pageTitles.home,
-    compiler:     t.pageTitles.compiler,
-    runner:       t.pageTitles.runner,
-    memory:       t.pageTitles.memory,
-    brain:        t.pageTitles.brain ?? 'AI Brain',
-    prompt:       t.pageTitles.prompt ?? 'Prompt Intelligence',
-    designer:     t.pageTitles.designer ?? 'Workflow Designer',
-    enterprise:   t.pageTitles.enterprise ?? 'Enterprise Center',
-    agents:       t.pageTitles.agents,
-    workflows:    t.pageTitles.workflows,
+    home: t.pageTitles.home,
+    compiler: t.pageTitles.compiler,
+    runner: t.pageTitles.runner,
+    memory: t.pageTitles.memory,
+    brain: t.pageTitles.brain ?? 'AI Brain',
+    prompt: t.pageTitles.prompt ?? 'Prompt Intelligence',
+    designer: t.pageTitles.designer ?? 'Workflow Designer',
+    enterprise: t.pageTitles.enterprise ?? 'Enterprise Center',
+    agents: t.pageTitles.agents,
+    workflows: t.pageTitles.workflows,
     integrations: t.pageTitles.integrations,
-    marketplace:  t.pageTitles.marketplace,
-    monitor:      t.pageTitles.monitor,
-    settings:     t.pageTitles.settings,
+    marketplace: t.pageTitles.marketplace,
+    monitor: t.pageTitles.monitor,
+    settings: t.pageTitles.settings,
   };
 
   const notifData = [
@@ -59,17 +64,35 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
     { ...MOCK_NOTIFICATIONS[3], ...t.notifications.usageAlert },
   ];
 
+  const profileMenuItems: { section: MenuSection; label: string; icon: React.ReactNode }[] = [
+    { section: 'profile', label: lang === 'es' ? 'Mi perfil' : 'My profile', icon: <User size={15} /> },
+    { section: 'organization', label: lang === 'es' ? 'Organización' : 'Organization', icon: <Building2 size={15} /> },
+    { section: 'team', label: lang === 'es' ? 'Equipo' : 'Team', icon: <Users size={15} /> },
+    { section: 'billing', label: lang === 'es' ? 'Facturación' : 'Billing', icon: <CreditCard size={15} /> },
+    { section: 'api', label: lang === 'es' ? 'API Keys' : 'API Keys', icon: <Key size={15} /> },
+    { section: 'security', label: lang === 'es' ? 'Seguridad' : 'Security', icon: <Shield size={15} /> },
+    { section: 'notifications', label: lang === 'es' ? 'Notificaciones' : 'Notifications', icon: <BellIcon size={15} /> },
+    { section: 'integrations', label: lang === 'es' ? 'Integraciones' : 'Integrations', icon: <Plug size={15} /> },
+  ];
+
   // Close menus on Escape or outside click
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setProfileOpen(false);
         setNotifOpen(false);
+        setFocusedIndex(-1);
+        if (profileBtnRef.current) profileBtnRef.current.focus();
       }
     };
     const handleClick = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+        setFocusedIndex(-1);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
     };
     document.addEventListener('keydown', handleKey);
     document.addEventListener('mousedown', handleClick);
@@ -79,24 +102,44 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
     };
   }, []);
 
-  const handleLogout = async () => {
+  // Keyboard navigation within profile menu
+  useEffect(() => {
+    if (profileOpen && focusedIndex >= 0) {
+      const item = profileMenuItems[focusedIndex];
+      const ref = item && menuRefs.current.get(item.section);
+      if (ref) ref.focus();
+    }
+  }, [focusedIndex, profileOpen]);
+
+  const handleProfileKeydown = (e: React.KeyboardEvent) => {
+    if (!profileOpen) return;
+    const total = profileMenuItems.length + 1; // +1 for logout
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev + 1) % total);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev - 1 + total) % total);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setFocusedIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setFocusedIndex(total - 1);
+    }
+  };
+
+  const navigateToSection = (section: MenuSection) => {
+    setProfileOpen(false);
+    setFocusedIndex(-1);
+    onNavigate('settings', section);
+  };
+
+  const handleLogout = () => {
     setLogoutError(false);
     setProfileOpen(false);
     onLogout();
   };
-
-  const navigateToSettings = (section?: string) => {
-    setProfileOpen(false);
-    onNavigate('settings', section);
-  };
-
-  // Profile menu items — each connected to a real action
-  const profileMenuItems = [
-    { label: t.topbar.profileItems[0], action: () => navigateToSettings('profile') },
-    { label: t.topbar.profileItems[1], action: () => navigateToSettings('billing') },
-    { label: t.topbar.profileItems[2], action: () => navigateToSettings('team') },
-    { label: t.topbar.profileItems[3], action: () => navigateToSettings('api') },
-  ];
 
   return (
     <header className="h-16 bg-surface-900 border-b border-surface-700 flex items-center px-6 gap-4 relative z-40">
@@ -112,7 +155,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
             type="text"
             placeholder={t.topbar.searchPlaceholder}
             className="input-field text-sm pl-9 py-2 h-9"
-            aria-label="Search"
+            aria-label={lang === 'es' ? 'Buscar' : 'Search'}
           />
           <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-neutral-600 bg-surface-700 px-1.5 py-0.5 rounded border border-surface-600">
             ⌘K
@@ -137,7 +180,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
           <button
             onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }}
             className="relative w-9 h-9 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-surface-700 transition-all"
-            aria-label="Notifications"
+            aria-label={lang === 'es' ? 'Notificaciones' : 'Notifications'}
             aria-expanded={notifOpen}
           >
             <Bell size={18} />
@@ -147,7 +190,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-12 w-80 card border-surface-600 shadow-card-hover animate-fade-in overflow-hidden">
+            <div className="absolute right-0 top-12 w-80 card border-surface-600 shadow-card-hover animate-fade-in overflow-hidden" role="dialog" aria-label="Notifications">
               <div className="flex items-center justify-between px-4 py-3 border-b border-surface-700">
                 <span className="text-sm font-semibold text-neutral-100">{t.topbar.notifications}</span>
                 <button onClick={() => setNotifOpen(false)} className="text-neutral-500 hover:text-neutral-300" aria-label="Close notifications">
@@ -169,7 +212,10 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
                 ))}
               </div>
               <div className="px-4 py-2.5 border-t border-surface-700">
-                <button className="text-xs text-brand-400 hover:text-brand-300 transition-colors">
+                <button
+                  onClick={() => setNotifOpen(false)}
+                  className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                >
                   {t.topbar.markAllRead}
                 </button>
               </div>
@@ -180,28 +226,41 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
         {/* Profile */}
         <div className="relative" ref={profileRef}>
           <button
-            onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
-            className="flex items-center gap-2 pl-2 pr-3 h-9 rounded-lg hover:bg-surface-700 transition-all"
-            aria-label="Profile menu"
+            ref={profileBtnRef}
+            onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); setFocusedIndex(-1); }}
+            className="flex items-center gap-2 pl-2 pr-3 h-9 rounded-lg hover:bg-surface-700 transition-all focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-900"
+            aria-label={lang === 'es' ? 'Menú de perfil' : 'Profile menu'}
             aria-expanded={profileOpen}
+            aria-haspopup="menu"
           >
-            <div className="w-6 h-6 rounded-full bg-brand-gradient flex-shrink-0" />
+            <div className="w-6 h-6 rounded-full bg-brand-gradient flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">
+              {firstName.charAt(0).toUpperCase()}
+            </div>
             <span className="text-sm font-medium text-neutral-200 hidden sm:block">{firstName}</span>
-            <ChevronDown size={14} className="text-neutral-500 hidden sm:block" />
+            <ChevronDown size={14} className={`text-neutral-500 hidden sm:block transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 top-12 w-48 card border-surface-600 shadow-card-hover animate-fade-in overflow-hidden">
+            <div
+              className="absolute right-0 top-12 w-56 card border-surface-600 shadow-card-hover animate-fade-in overflow-hidden"
+              role="menu"
+              aria-label="Profile menu"
+              onKeyDown={handleProfileKeydown}
+            >
               <div className="px-4 py-3 border-b border-surface-700">
-                <p className="text-sm font-medium text-neutral-100">{displayName}</p>
-                <p className="text-xs text-neutral-500">{user?.email || ''}</p>
+                <p className="text-sm font-medium text-neutral-100 truncate">{displayName}</p>
+                <p className="text-xs text-neutral-500 truncate">{user?.email || ''}</p>
               </div>
-              {profileMenuItems.map((item) => (
+              {profileMenuItems.map((item, idx) => (
                 <button
-                  key={item.label}
-                  onClick={item.action}
-                  className="w-full text-left px-4 py-2.5 text-sm text-neutral-400 hover:text-neutral-100 hover:bg-surface-750 transition-colors"
+                  key={item.section}
+                  ref={(el) => { if (el) menuRefs.current.set(item.section, el); }}
+                  onClick={() => navigateToSection(item.section)}
+                  className="w-full flex items-center gap-3 text-left px-4 py-2.5 text-sm text-neutral-400 hover:text-neutral-100 hover:bg-surface-750 transition-colors focus-visible:bg-surface-750 focus-visible:text-neutral-100 outline-none"
+                  role="menuitem"
+                  tabIndex={focusedIndex === idx ? 0 : -1}
                 >
+                  <span className="text-neutral-500">{item.icon}</span>
                   {item.label}
                 </button>
               ))}
@@ -212,9 +271,13 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
                   </p>
                 )}
                 <button
+                  ref={(el) => { if (el) menuRefs.current.set('logout', el); }}
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2.5 text-sm text-error-400 hover:bg-error-500/10 transition-colors"
+                  className="w-full flex items-center gap-3 text-left px-4 py-2.5 text-sm text-error-400 hover:bg-error-500/10 transition-colors focus-visible:bg-error-500/10 outline-none"
+                  role="menuitem"
+                  tabIndex={focusedIndex === profileMenuItems.length ? 0 : -1}
                 >
+                  <LogOut size={15} />
                   {t.topbar.closeSession}
                 </button>
               </div>

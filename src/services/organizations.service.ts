@@ -21,11 +21,35 @@ export const getMyOrganizations = async (): Promise<OrgWithRole[]> => {
 
 export const updateOrganization = async (
   id: string,
-  updates: Partial<Pick<Organization, 'name' | 'logo_url'>>,
+  updates: Partial<Pick<Organization, 'name' | 'logo_url'>> & {
+    sector?: string;
+    company_size?: string;
+    country?: string;
+    timezone?: string;
+  },
 ): Promise<Organization> => {
+  const settingsUpdate: Record<string, unknown> = {};
+  if (updates.sector !== undefined) settingsUpdate.sector = updates.sector;
+  if (updates.company_size !== undefined) settingsUpdate.company_size = updates.company_size;
+  if (updates.country !== undefined) settingsUpdate.country = updates.country;
+  if (updates.timezone !== undefined) settingsUpdate.timezone = updates.timezone;
+
+  const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.logo_url !== undefined) dbUpdates.logo_url = updates.logo_url;
+
+  if (Object.keys(settingsUpdate).length > 0) {
+    const { data: current } = await supabase
+      .from('organizations')
+      .select('settings')
+      .eq('id', id)
+      .maybeSingle();
+    dbUpdates.settings = { ...(current?.settings ?? {}), ...settingsUpdate };
+  }
+
   const { data, error } = await supabase
     .from('organizations')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update(dbUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -45,4 +69,20 @@ export const getOrgMembers = async (organizationId: string): Promise<OrgMember[]
     created_at: m.created_at as string,
     profile: m.profiles as OrgMember['profile'],
   }));
+};
+
+export const updateMemberRole = async (membershipId: string, role: string): Promise<void> => {
+  const { error } = await supabase
+    .from('memberships')
+    .update({ role })
+    .eq('id', membershipId);
+  if (error) throw error;
+};
+
+export const removeMember = async (membershipId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('memberships')
+    .delete()
+    .eq('id', membershipId);
+  if (error) throw error;
 };

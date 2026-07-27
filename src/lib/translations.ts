@@ -188,7 +188,7 @@ export const translations = {
       searchPlaceholder: 'Buscar agentes, workflows, integraciones...',
       notifications: 'Notificaciones',
       markAllRead: 'Marcar todas como leídas',
-      profileItems: ['Mi perfil', 'Facturación', 'Equipo', 'API Keys'],
+      profileItems: ['Mi perfil', 'Organización', 'Equipo', 'Facturación', 'API Keys', 'Seguridad', 'Notificaciones', 'Integraciones'],
       closeSession: 'Cerrar sesión',
     },
     pageTitles: {
@@ -569,7 +569,7 @@ export const translations = {
       searchPlaceholder: 'Search agents, workflows, integrations...',
       notifications: 'Notifications',
       markAllRead: 'Mark all as read',
-      profileItems: ['My profile', 'Billing', 'Team', 'API Keys'],
+      profileItems: ['My profile', 'Organization', 'Team', 'Billing', 'API Keys', 'Security', 'Notifications', 'Integrations'],
       closeSession: 'Sign out',
     },
     pageTitles: {
