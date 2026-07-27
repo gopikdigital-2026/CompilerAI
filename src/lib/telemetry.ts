@@ -7,7 +7,14 @@ type TelemetryEvent =
   | 'security_viewed' | 'security_password_changed'
   | 'notifications_updated'
   | 'integration_viewed'
-  | 'logout_completed' | 'logout_failed';
+  | 'logout_completed' | 'logout_failed'
+  | 'dashboard_viewed' | 'dashboard_period_changed' | 'dashboard_refreshed'
+  | 'dashboard_empty_state_viewed'
+  | 'data_source_connect_started'
+  | 'business_analysis_started' | 'business_analysis_completed' | 'business_analysis_failed'
+  | 'opportunity_opened' | 'opportunity_approved' | 'opportunity_discarded'
+  | 'next_best_action_opened'
+  | 'quick_action_clicked' | 'automation_opened' | 'alert_opened';
 
 const FORBIDDEN_KEYS = ['password', 'token', 'apiKey', 'api_key', 'secret', 'authorization'];
 

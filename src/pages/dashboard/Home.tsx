@@ -1,168 +1,231 @@
-import { TrendingUp, TrendingDown, Bot, GitBranch, Activity, Zap, ArrowRight } from 'lucide-react';
-import { Sparkline } from '../../components/ui/Sparkline';
-import { BarChart } from '../../components/ui/BarChart';
-import { StatusBadge } from '../../components/ui/StatusBadge';
-import { MOCK_AGENTS, MOCK_WORKFLOWS } from '../../lib/mockData';
-import { useTranslation } from '../../hooks/useTranslation';
-import { useLanguage } from '../../hooks/useLanguage';
+import { useState, useEffect } from 'react';
+import { Loader2, AlertCircle, Plus, Building2 } from 'lucide-react';
+import { useDashboard, type DashboardPeriod } from '../../hooks/useDashboard';
 import { useProfile } from '../../hooks/useProfile';
 import { useOrganization } from '../../hooks/useOrganization';
 import { useAuth } from '../../hooks/useAuth';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useLanguage } from '../../hooks/useLanguage';
+import { track } from '../../lib/telemetry';
+import { DashboardHeader } from '../../components/dashboard/DashboardHeader';
+import { ExecutiveSummary } from '../../components/dashboard/ExecutiveSummary';
+import { NextBestAction } from '../../components/dashboard/NextBestAction';
+import { KpiGrid } from '../../components/dashboard/KpiGrid';
+import { OpportunitiesSection } from '../../components/dashboard/OpportunitiesSection';
+import { AlertsSection } from '../../components/dashboard/AlertsSection';
+import { AutomationsSection } from '../../components/dashboard/AutomationsSection';
+import { ActivitySection } from '../../components/dashboard/ActivitySection';
+import { ConnectorsSection } from '../../components/dashboard/ConnectorsSection';
+import { QuickActions } from '../../components/dashboard/QuickActions';
+import { RunsChart } from '../../components/dashboard/RunsChart';
 
 export function HomeDashboard() {
   const { t } = useTranslation();
-  const { lang } = useLanguage();
-  const h = t.home;
   const { user } = useAuth();
   const { profile } = useProfile();
   const { activeOrg } = useOrganization();
+  const [period, setPeriod] = useState<DashboardPeriod>(30);
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'there';
+  const orgName = activeOrg?.name ?? null;
 
-  const STAT_CARDS = [
-    { label: h.statAgents,    value: '12',    change: '+2',    trend: 'up' as const, icon: <Bot size={18} />,      sparkData: [4,6,5,8,7,9,11,10,12,12], color: '#0072e6' },
-    { label: h.statRuns,      value: '3,847', change: '+18%', trend: 'up' as const, icon: <Zap size={18} />,      sparkData: [120,200,180,300,250,400,350,420,380,450], color: '#00e6b4' },
-    { label: h.statWorkflows, value: '5',     change: '+1',   trend: 'up' as const, icon: <GitBranch size={18} />, sparkData: [2,3,3,4,4,5,5,5,5,5], color: '#0072e6' },
-    { label: h.statSuccess,   value: '99.2%', change: '-0.1%', trend: 'down' as const, icon: <Activity size={18} />, sparkData: [98,99,99,100,99,98,99,100,99,99], color: '#22c55e' },
-  ];
+  const dashboard = useDashboard(period);
 
-  const BAR_DATA = h.chartDays.map((label, i) => ({
-    label,
-    value: [340, 480, 390, 620, 510, 280, 195][i],
-  }));
+  useEffect(() => {
+    track('dashboard_viewed', { has_org: !!activeOrg, period });
+  }, [activeOrg, period]);
 
-  const welcomeTitle = lang === 'es'
-    ? `Buenos días, ${displayName}`
-    : `Good morning, ${displayName}`;
+  useEffect(() => {
+    if (dashboard.isEmpty) {
+      track('dashboard_empty_state_viewed', { org_id: activeOrg?.id });
+    }
+  }, [dashboard.isEmpty, activeOrg?.id]);
 
-  return (
-    <div className="p-6 space-y-6 animate-fade-in">
-      {/* Welcome banner */}
-      <div className="card p-5 bg-gradient-to-r from-brand-600/15 to-accent-600/10 border-brand-500/20">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-100">{welcomeTitle}</h2>
-            <p className="text-sm text-neutral-400 mt-0.5">
-              {activeOrg ? (
-                <span className="text-brand-400 font-medium">{activeOrg.name}</span>
-              ) : null}
-              {activeOrg ? ' · ' : ''}
-              {h.welcomeSubtitle}
-            </p>
-          </div>
-          <button className="btn-primary text-sm hidden sm:flex">
-            {h.viewAlerts} <ArrowRight size={15} />
+  const handleRefresh = () => dashboard.refresh();
+  const handlePeriodChange = (p: DashboardPeriod) => {
+    setPeriod(p);
+    dashboard.changePeriod(p);
+  };
+
+  const handleAnalyze = () => {
+    track('business_analysis_started', { org_id: activeOrg?.id });
+  };
+  const handleConnectData = () => {
+    track('data_source_connect_started', { org_id: activeOrg?.id });
+  };
+  const handleQuickAction = (action: string) => {
+    track('quick_action_clicked', { action });
+  };
+  const handleOpportunityView = (id: string) => track('opportunity_opened', { id });
+  const handleOpportunityApprove = (id: string) => track('opportunity_approved', { id });
+  const handleOpportunityDiscard = (id: string) => track('opportunity_discarded', { id });
+  const handleAlertOpen = (id: string) => track('alert_opened', { id });
+  const handleAutomationOpen = (id: string) => track('automation_opened', { id });
+  const handleNextBestActionReview = () => track('next_best_action_opened', {});
+
+  // Loading state
+  if (dashboard.loading) {
+    return (
+      <div data-testid="dashboard" className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 size={24} className="animate-spin text-brand-400" />
+          <p className="text-sm text-neutral-500">{t.dashboard.loadingDashboard}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (dashboard.error) {
+    return (
+      <div data-testid="dashboard" className="p-6">
+        <div className="card p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
+          <AlertCircle size={32} className="text-error-400 mb-3" />
+          <p className="text-sm font-medium text-neutral-200 mb-1">{t.dashboard.errorDashboard}</p>
+          <p className="text-xs text-neutral-500 mb-4">{dashboard.error}</p>
+          <button onClick={handleRefresh} className="btn-primary text-sm">
+            {t.dashboard.retry}
           </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {STAT_CARDS.map((card) => (
-          <div key={card.label} className="card-hover p-5">
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-9 h-9 rounded-lg bg-surface-700 border border-surface-600 flex items-center justify-center text-neutral-400">
-                {card.icon}
-              </div>
-              <Sparkline data={card.sparkData} color={card.color} height={32} />
-            </div>
-            <p className="text-2xl font-bold text-neutral-100">{card.value}</p>
-            <p className="text-xs text-neutral-500 mt-0.5">{card.label}</p>
-            <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${card.trend === 'up' ? 'text-success-400' : 'text-error-400'}`}>
-              {card.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-              {card.change} {h.vsYesterday}
-            </div>
-          </div>
-        ))}
+  // No organization state
+  if (!activeOrg) {
+    return (
+      <div data-testid="dashboard" className="p-6">
+        <div className="card p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
+          <Building2 size={32} className="text-neutral-400 mb-3" />
+          <p className="text-sm font-medium text-neutral-200 mb-1">{t.dashboard.noOrg}</p>
+          <p className="text-xs text-neutral-500 mb-4">{t.dashboard.noOrgDesc}</p>
+          <button onClick={() => window.location.hash = '#settings/organization'} className="btn-primary text-sm flex items-center gap-1.5">
+            <Plus size={14} /> {t.settings.sections.organization}
+          </button>
+        </div>
       </div>
+    );
+  }
 
+  // First visit / empty state
+  if (dashboard.isEmpty) {
+    return (
+      <div data-testid="dashboard" className="p-6 space-y-6 animate-fade-in">
+        <DashboardHeader
+          userName={displayName}
+          orgName={orgName}
+          lastUpdated={dashboard.lastUpdated}
+          period={period}
+          onPeriodChange={handlePeriodChange}
+          onRefresh={handleRefresh}
+          refreshing={dashboard.loading}
+          onDataSettings={() => window.location.hash = '#settings/integrations'}
+        />
+
+        {/* Welcome banner for new users */}
+        <div className="card p-8 flex flex-col items-center justify-center text-center min-h-[300px] border-accent-500/20 bg-gradient-to-r from-accent-600/10 to-brand-600/5">
+          <h3 className="text-lg font-semibold text-neutral-100 mb-2">{t.dashboard.welcomeNew}</h3>
+          <p className="text-sm text-neutral-400 mb-6">{t.dashboard.welcomeNewDesc}</p>
+          <button
+            data-testid="start-analysis-button"
+            onClick={() => { handleAnalyze(); window.location.hash = '#settings/integrations'; }}
+            className="btn-primary text-sm flex items-center gap-2"
+          >
+            {t.dashboard.connectFirst}
+          </button>
+        </div>
+
+        <QuickActions
+          onAnalyze={() => { handleAnalyze(); handleQuickAction('analyze'); }}
+          onConnectData={() => { handleConnectData(); handleQuickAction('connect_data'); window.location.hash = '#settings/integrations'; }}
+          onAskCopilot={() => handleQuickAction('ask_copilot')}
+          onCreateAutomation={() => handleQuickAction('create_automation')}
+          onImportFiles={() => handleQuickAction('import_files')}
+          onReviewOpportunities={() => handleQuickAction('review_opportunities')}
+          onInviteTeam={() => { handleQuickAction('invite_team'); window.location.hash = '#settings/team'; }}
+        />
+      </div>
+    );
+  }
+
+  // Full dashboard with data
+  return (
+    <div data-testid="dashboard" className="p-6 space-y-6 animate-fade-in">
+      {/* 1. Header */}
+      <DashboardHeader
+        userName={displayName}
+        orgName={orgName}
+        lastUpdated={dashboard.lastUpdated}
+        period={period}
+        onPeriodChange={handlePeriodChange}
+        onRefresh={handleRefresh}
+        refreshing={dashboard.loading}
+        onDataSettings={() => window.location.hash = '#settings/integrations'}
+      />
+
+      {/* 2. Alerts (critical first, no scroll needed) */}
+      {dashboard.alerts.some((a) => a.severity === 'critical') && (
+        <AlertsSection alerts={dashboard.alerts.filter((a) => a.severity === 'critical')} onOpen={handleAlertOpen} />
+      )}
+
+      {/* 3. Next best action */}
+      <NextBestAction
+        action={dashboard.nextBestAction}
+        onReview={handleNextBestActionReview}
+        onExecute={() => handleQuickAction('create_automation')}
+      />
+
+      {/* 4. Executive summary */}
+      <ExecutiveSummary summary={dashboard.executiveSummary} isEmpty={dashboard.isEmpty} />
+
+      {/* 5. KPIs */}
+      <KpiGrid kpis={dashboard.kpis} />
+
+      {/* 6. Runs chart + Opportunities */}
       <div className="grid lg:grid-cols-3 gap-4">
-        {/* Executions chart */}
-        <div className="card p-5 lg:col-span-2">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-100">{h.chartTitle}</h3>
-              <p className="text-xs text-neutral-500 mt-0.5">{h.chartSubtitle}</p>
-            </div>
-            <span className="badge-accent text-xs">+12% WoW</span>
-          </div>
-          <BarChart data={BAR_DATA} color="#0072e6" height={130} />
+        <div className="lg:col-span-2">
+          <RunsChart data={dashboard.weeklyRuns} />
         </div>
-
-        {/* Quick stats */}
-        <div className="card p-5">
-          <h3 className="text-sm font-semibold text-neutral-100 mb-4">{h.systemTitle}</h3>
-          <div className="space-y-4">
-            {h.systemLabels.map((label, i) => {
-              const values = [42, 68, 85, 31];
-              const colors = ['bg-brand-500', 'bg-accent-500', 'bg-warning-500', 'bg-success-500'];
-              return (
-                <div key={label}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-neutral-400">{label}</span>
-                    <span className="text-xs font-medium text-neutral-200">{values[i]}%</span>
-                  </div>
-                  <div className="h-1.5 bg-surface-700 rounded-full overflow-hidden">
-                    <div className={`h-full ${colors[i]} rounded-full transition-all duration-500`} style={{ width: `${values[i]}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <OpportunitiesSection
+          opportunities={dashboard.opportunities}
+          onView={handleOpportunityView}
+          onApprove={handleOpportunityApprove}
+          onDiscard={handleOpportunityDiscard}
+        />
       </div>
 
+      {/* 7. Non-critical alerts + Automations */}
       <div className="grid lg:grid-cols-2 gap-4">
-        {/* Recent agents */}
-        <div className="card">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-700">
-            <h3 className="text-sm font-semibold text-neutral-100">{h.recentAgents}</h3>
-            <button className="text-xs text-brand-400 hover:text-brand-300 transition-colors">{t.common.viewAll}</button>
-          </div>
-          <div className="divide-y divide-surface-700">
-            {MOCK_AGENTS.slice(0, 4).map((agent) => (
-              <div key={agent.id} className="flex items-center justify-between px-5 py-3 hover:bg-surface-750 transition-colors">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-surface-700 border border-surface-600 flex items-center justify-center flex-shrink-0">
-                    <Bot size={14} className="text-neutral-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-neutral-200 truncate">{agent.name}</p>
-                    <p className="text-xs text-neutral-500">{agent.lastRun}</p>
-                  </div>
-                </div>
-                <StatusBadge status={agent.status} pulse />
-              </div>
-            ))}
-          </div>
-        </div>
+        <AlertsSection
+          alerts={dashboard.alerts.filter((a) => a.severity !== 'critical')}
+          onOpen={handleAlertOpen}
+        />
+        <AutomationsSection
+          automations={dashboard.automations}
+          onOpen={handleAutomationOpen}
+          onToggle={handleAutomationOpen}
+          onOpenStudio={() => handleQuickAction('open_studio')}
+        />
+      </div>
 
-        {/* Recent workflows */}
-        <div className="card">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-700">
-            <h3 className="text-sm font-semibold text-neutral-100">{h.activeWorkflows}</h3>
-            <button className="text-xs text-brand-400 hover:text-brand-300 transition-colors">{t.common.viewAll}</button>
-          </div>
-          <div className="divide-y divide-surface-700">
-            {MOCK_WORKFLOWS.slice(0, 4).map((wf) => (
-              <div key={wf.id} className="flex items-center justify-between px-5 py-3 hover:bg-surface-750 transition-colors">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-surface-700 border border-surface-600 flex items-center justify-center flex-shrink-0">
-                    <GitBranch size={14} className="text-neutral-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-neutral-200 truncate">{wf.name}</p>
-                    <p className="text-xs text-neutral-500">{wf.steps} {h.steps} · {wf.lastRun}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-success-400">{wf.successRate}%</span>
-                  <StatusBadge status={wf.status} pulse />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* 8. Quick actions */}
+      <QuickActions
+        onAnalyze={() => { handleAnalyze(); handleQuickAction('analyze'); }}
+        onConnectData={() => { handleConnectData(); handleQuickAction('connect_data'); window.location.hash = '#settings/integrations'; }}
+        onAskCopilot={() => handleQuickAction('ask_copilot')}
+        onCreateAutomation={() => handleQuickAction('create_automation')}
+        onImportFiles={() => handleQuickAction('import_files')}
+        onReviewOpportunities={() => handleQuickAction('review_opportunities')}
+        onInviteTeam={() => { handleQuickAction('invite_team'); window.location.hash = '#settings/team'; }}
+      />
+
+      {/* 9. Activity + Connectors */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <ActivitySection activity={dashboard.activity} />
+        <ConnectorsSection
+          connectors={dashboard.connectors}
+          onConnect={() => { handleConnectData(); window.location.hash = '#settings/integrations'; }}
+        />
       </div>
     </div>
   );
