@@ -2,13 +2,19 @@ import {
   Activity, TrendingUp, TrendingDown, Minus, AlertTriangle,
   CheckCircle, XCircle, Lightbulb, Target, Zap, Clock,
   FileText, Database, ChevronDown, ChevronUp, ShieldAlert,
-  ArrowRight, DollarSign, BarChart3,
+  ArrowRight, DollarSign, BarChart3, MessageSquare, Download, Share2, Flag, GitCompare,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAnalysis } from '../../hooks/useAnalysis';
 import { useOrganization } from '../../hooks/useOrganization';
 import { useTranslation } from '../../hooks/useTranslation';
+import { track } from '../../lib/telemetry';
 import type { ExecutiveReportData, HealthScoreDimension } from '../../types/analysis';
+import { CopilotPanel } from '../../components/analysis/CopilotPanel';
+import { RoadmapView } from '../../components/analysis/RoadmapView';
+import { HistoricalComparison } from '../../components/analysis/HistoricalComparison';
+import { ExportModal } from '../../components/analysis/ExportModal';
+import { ShareModal } from '../../components/analysis/ShareModal';
 
 const trendIcons = {
   up: TrendingUp,
@@ -41,14 +47,26 @@ function formatDuration(ms: number | null | undefined): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+type ReportTab = 'summary' | 'roadmap' | 'comparison';
+
 export function ExecutiveReportPage() {
   const analysis = useAnalysis();
   const { activeOrg } = useOrganization();
   const { t } = useTranslation();
   const [expandedDimensions, setExpandedDimensions] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<ReportTab>('summary');
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const report = analysis.executiveReport;
   const result = analysis.result;
+
+  useEffect(() => {
+    if (report && result) {
+      track('report_opened', { analysis_id: analysis.currentAnalysisId });
+    }
+  }, [report, result, analysis.currentAnalysisId]);
 
   if (!report || !result) {
     return (
@@ -157,6 +175,33 @@ export function ExecutiveReportPage() {
         </div>
       </div>
 
+      {/* ── Tab Navigation ────────────────────────────────────────────── */}
+      <div className="flex items-center gap-1 border-b border-surface-700">
+        {[
+          { id: 'summary' as const, label: 'Resumen', icon: Lightbulb },
+          { id: 'roadmap' as const, label: 'Roadmap', icon: Flag },
+          { id: 'comparison' as const, label: 'Comparativa', icon: GitCompare },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              data-testid={`report-tab-${tab.id}`}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors ${
+                isActive ? 'border-brand-500 text-brand-400' : 'border-transparent text-neutral-500 hover:text-neutral-300'
+              }`}
+            >
+              <Icon size={14} /> {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Tab Content ──────────────────────────────────────────────── */}
+      {activeTab === 'summary' && (
+        <>
       {/* ── AI Executive Summary (5 questions) ─────────────────────────── */}
       <div data-testid="executive-summary" className="card">
         <div className="px-5 py-4 border-b border-surface-700 flex items-center gap-2">
@@ -305,6 +350,25 @@ export function ExecutiveReportPage() {
           ))}
         </div>
       </div>
+        </>
+      )}
+
+      {activeTab === 'roadmap' && (
+        <RoadmapView analysisResult={result} />
+      )}
+
+      {activeTab === 'comparison' && (
+        <HistoricalComparison />
+      )}
+
+      {/* Copilot Panel */}
+      <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
+
+      {/* Export Modal */}
+      <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} />
+
+      {/* Share Modal */}
+      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );
 }

@@ -3,10 +3,13 @@ import {
   CheckCircle, XCircle, MessageSquare, GitBranch, Eye,
   TrendingUp, Clock, ShieldAlert, AlertTriangle, DollarSign,
   Link2, FileText, BarChart3, ChevronDown, ChevronUp,
+  Calendar, UserPlus, Send, ListTodo, CalendarClock,
 } from 'lucide-react';
 import type { AnalysisOpportunity } from '../../types/analysis';
 import { OPPORTUNITY_STATUS_INFO } from '../../lib/prioritizationEngine';
+import { ACTION_DEFINITIONS, createAction, actionToOpportunityStatus, type ActionType } from '../../lib/actionPlanEngine';
 import { EvidencePanel } from './EvidencePanel';
+import { track } from '../../lib/telemetry';
 
 interface OpportunityCardProps {
   opp: AnalysisOpportunity;
@@ -15,6 +18,7 @@ interface OpportunityCardProps {
   onSendToCopilot: (id: string) => void;
   onCreateAutomation: (id: string) => void;
   onViewDetail: (opp: AnalysisOpportunity) => void;
+  onAction?: (opp: AnalysisOpportunity, actionType: ActionType, details?: Record<string, unknown>) => void;
 }
 
 const priorityColors: Record<string, string> = {
@@ -40,10 +44,11 @@ const riskColors: Record<string, string> = {
 type TabId = 'overview' | 'evidence' | 'priority';
 
 export function OpportunityCard({
-  opp, onApprove, onDiscard, onSendToCopilot, onCreateAutomation, onViewDetail,
+  opp, onApprove, onDiscard, onSendToCopilot, onCreateAutomation, onViewDetail, onAction,
 }: OpportunityCardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [priorityExpanded, setPriorityExpanded] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const statusInfo = OPPORTUNITY_STATUS_INFO[opp.status];
   const canAct = opp.status === 'new' || opp.status === 'reviewed';
 
@@ -196,7 +201,7 @@ export function OpportunityCard({
       <div className="flex items-center gap-2 flex-wrap pt-3 mt-3 border-t border-surface-700">
         <button
           data-testid="approve-opportunity"
-          onClick={() => onApprove(opp.id)}
+          onClick={() => { onApprove(opp.id); track('opportunity_approved', { id: opp.id }); onAction?.(opp, 'approve'); }}
           disabled={!canAct}
           className="text-xs text-success-400 hover:text-success-300 disabled:text-neutral-600 disabled:cursor-not-allowed flex items-center gap-1"
         >
@@ -204,7 +209,7 @@ export function OpportunityCard({
         </button>
         <button
           data-testid="reject-opportunity"
-          onClick={() => onDiscard(opp.id)}
+          onClick={() => { onDiscard(opp.id); track('opportunity_rejected', { id: opp.id }); onAction?.(opp, 'discard'); }}
           disabled={!canAct}
           className="text-xs text-neutral-500 hover:text-neutral-400 disabled:text-neutral-600 disabled:cursor-not-allowed flex items-center gap-1"
         >
@@ -212,17 +217,24 @@ export function OpportunityCard({
         </button>
         <button
           data-testid="send-to-copilot"
-          onClick={() => onSendToCopilot(opp.id)}
+          onClick={() => { onSendToCopilot(opp.id); onAction?.(opp, 'send_to_team'); }}
           className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1"
         >
           <MessageSquare size={12} /> Copilot
         </button>
         <button
           data-testid="create-automation"
-          onClick={() => onCreateAutomation(opp.id)}
+          onClick={() => { onCreateAutomation(opp.id); onAction?.(opp, 'create_automation'); }}
           className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-1"
         >
           <GitBranch size={12} /> Automatizar
+        </button>
+        <button
+          data-testid="more-actions"
+          onClick={() => setShowActions(!showActions)}
+          className="text-xs text-neutral-500 hover:text-neutral-400 flex items-center gap-1"
+        >
+          <ListTodo size={12} /> Más acciones
         </button>
         <button
           onClick={() => onViewDetail(opp)}
@@ -231,6 +243,36 @@ export function OpportunityCard({
           <Eye size={12} /> Detalle
         </button>
       </div>
+
+      {/* Extended action menu */}
+      {showActions && (
+        <div data-testid="action-menu" className="mt-2 pt-2 border-t border-surface-700 grid grid-cols-2 gap-2 animate-fade-in">
+          {ACTION_DEFINITIONS.filter((a) => !['approve', 'discard', 'create_automation', 'send_to_team'].includes(a.type)).map((action) => {
+            const icons: Record<string, typeof Clock> = {
+              postpone: Clock,
+              assign: UserPlus,
+              schedule: CalendarClock,
+              create_task: ListTodo,
+              send_to_team: Send,
+            };
+            const Icon = icons[action.type] ?? ListTodo;
+            return (
+              <button
+                key={action.type}
+                data-testid={`action-${action.type}`}
+                onClick={() => {
+                  onAction?.(opp, action.type);
+                  track('action_taken', { action: action.type, opportunity_id: opp.id });
+                  setShowActions(false);
+                }}
+                className="text-xs text-neutral-400 hover:text-neutral-200 flex items-center gap-1.5 p-2 rounded bg-surface-800 hover:bg-surface-750"
+              >
+                <Icon size={12} /> {action.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
