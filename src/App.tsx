@@ -9,16 +9,25 @@ import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { LegalPage } from './pages/LegalPage';
 import { useState, useEffect } from 'react';
 
 function AppRouter() {
   const { loading, user, signOut } = useAuth();
-  const [authView, setAuthView] = useState<'login' | 'register' | 'forgot'>('login');
+  const [authView, setAuthView] = useState<'login' | 'register' | 'forgot' | 'terms' | 'privacy'>('login');
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === '#register') setAuthView('register');
-    else if (hash === '#forgot') setAuthView('forgot');
+    const handler = () => {
+      const hash = window.location.hash;
+      if (hash === '#register') setAuthView('register');
+      else if (hash === '#forgot') setAuthView('forgot');
+      else if (hash === '#terms') setAuthView('terms');
+      else if (hash === '#privacy') setAuthView('privacy');
+      else if (hash === '' || hash === '#') setAuthView('login');
+    };
+    handler();
+    window.addEventListener('hashchange', handler);
+    return () => window.removeEventListener('hashchange', handler);
   }, []);
 
   if (loading) {
@@ -35,6 +44,8 @@ function AppRouter() {
   const handleAuthNavigate = (page: string) => {
     if (page === 'register') { setAuthView('register'); window.location.hash = '#register'; }
     else if (page === 'forgot-password') { setAuthView('forgot'); window.location.hash = '#forgot'; }
+    else if (page === 'terms') { setAuthView('terms'); window.location.hash = '#terms'; }
+    else if (page === 'privacy') { setAuthView('privacy'); window.location.hash = '#privacy'; }
     else if (page === 'landing') { setAuthView('login'); window.location.hash = ''; }
     else setAuthView('login');
   };
@@ -42,6 +53,8 @@ function AppRouter() {
   if (!user) {
     if (authView === 'register') return <Register onNavigate={handleAuthNavigate} />;
     if (authView === 'forgot') return <ForgotPassword onNavigate={handleAuthNavigate} />;
+    if (authView === 'terms') return <LegalPage type="terms" onNavigate={handleAuthNavigate} />;
+    if (authView === 'privacy') return <LegalPage type="privacy" onNavigate={handleAuthNavigate} />;
     return <Login onNavigate={handleAuthNavigate} />;
   }
 

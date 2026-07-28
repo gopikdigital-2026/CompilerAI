@@ -148,6 +148,11 @@ export function Login({ onNavigate }: LoginProps) {
               {a.registerLink}
             </button>
           </p>
+          <p className="mt-4 text-xs text-neutral-600">
+            <button onClick={() => onNavigate('terms')} className="hover:text-brand-400 transition-colors">{t.terms}</button>
+            {' · '}
+            <button onClick={() => onNavigate('privacy')} className="hover:text-brand-400 transition-colors">{t.privacy}</button>
+          </p>
         </div>
       </div>
     </div>

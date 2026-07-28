@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
+import { Footer } from '../components/ui/Footer';
 import { useTranslation } from '../hooks/useTranslation';
 import { useLanguage } from '../hooks/useLanguage';
 import { Globe } from 'lucide-react';
@@ -248,30 +249,14 @@ export function Landing({ onNavigate }: LandingProps) {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-surface-700 py-12 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-5 gap-8 mb-10">
-            <div className="md:col-span-2">
-              <Logo size="md" />
-              <p className="text-sm text-neutral-500 mt-3 leading-relaxed max-w-xs">{l.footerTagline}</p>
-            </div>
-            {l.footerCols.map((col) => (
-              <div key={col.title}>
-                <h4 className="text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-3">{col.title}</h4>
-                <ul className="space-y-2">
-                  {col.links.map((link) => (
-                    <li key={link}><span className="text-sm text-neutral-500 cursor-default">{link}</span></li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-surface-700 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-neutral-600">{l.footerCopyright}</p>
-            <p className="text-xs text-neutral-600">{l.footerBuilt}</p>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        onNavigate={onNavigate}
+        tagline={l.footerTagline}
+        columns={l.footerCols.map((col) => ({
+          title: col.title,
+          links: col.links.map((link) => ({ label: link })),
+        }))}
+      />
     </div>
   );
 }

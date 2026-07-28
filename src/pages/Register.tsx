@@ -147,9 +147,9 @@ export function Register({ onNavigate }: RegisterProps) {
               <input type="checkbox" id="terms" className="mt-0.5 rounded" required />
               <label htmlFor="terms" className="text-xs text-neutral-500 leading-relaxed">
                 {a.terms}{' '}
-                <span className="text-brand-400 cursor-pointer hover:underline">{a.termsLink}</span>
+                <a href="#terms" className="text-brand-400 cursor-pointer hover:underline">{a.termsLink}</a>
                 {' '}{a.and}{' '}
-                <span className="text-brand-400 cursor-pointer hover:underline">{a.privacyLink}</span>
+                <a href="#privacy" className="text-brand-400 cursor-pointer hover:underline">{a.privacyLink}</a>
               </label>
             </div>
             <button
@@ -174,6 +174,11 @@ export function Register({ onNavigate }: RegisterProps) {
             <button onClick={() => onNavigate('login')} className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
               {a.loginLink}
             </button>
+          </p>
+          <p className="mt-4 text-xs text-neutral-600">
+            <button onClick={() => onNavigate('terms')} className="hover:text-brand-400 transition-colors">{t.terms}</button>
+            {' · '}
+            <button onClick={() => onNavigate('privacy')} className="hover:text-brand-400 transition-colors">{t.privacy}</button>
           </p>
         </div>
       </div>

@@ -25,6 +25,8 @@ export const translations = {
       new: 'Nuevo',
       featured: 'Destacado',
     },
+    terms: 'Términos de Servicio',
+    privacy: 'Política de Privacidad',
     nav: {
       product: 'Producto',
       useCases: 'Casos de uso',
@@ -620,6 +622,8 @@ export const translations = {
       new: 'New',
       featured: 'Featured',
     },
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy',
     nav: {
       product: 'Product',
       useCases: 'Use cases',
