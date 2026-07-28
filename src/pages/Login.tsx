@@ -3,6 +3,7 @@ import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { useTranslation } from '../hooks/useTranslation';
 import { useToast } from '../components/ui/Toast';
+import { OAuthButtons } from '../components/ui/OAuthButtons';
 import { signIn } from '../services/auth.service';
 
 interface LoginProps {
@@ -139,13 +140,7 @@ export function Login({ onNavigate }: LoginProps) {
             <div className="flex-1 h-px bg-surface-600" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {['Google', 'GitHub'].map((provider) => (
-              <button key={provider} className="btn-secondary justify-center text-sm py-2.5">
-                {provider}
-              </button>
-            ))}
-          </div>
+          <OAuthButtons onOAuthError={(msg) => setError(msg)} />
 
           <p className="text-center text-sm text-neutral-500 mt-6">
             {a.noAccount}{' '}

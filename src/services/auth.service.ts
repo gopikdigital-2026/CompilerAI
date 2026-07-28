@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import type { ProviderId } from '../lib/authProviders';
 
 export const signIn = async (email: string, password: string) => {
   const start = performance.now();
@@ -24,6 +25,22 @@ export const signUp = async (email: string, password: string, fullName: string) 
     throw error;
   }
   logger.timing('auth_signUp', Math.round(performance.now() - start));
+  return data;
+};
+
+export const signInWithOAuth = async (provider: ProviderId) => {
+  const start = performance.now();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://compilerai.io',
+    },
+  });
+  if (error) {
+    logger.supabaseError('oauth_signIn failed', error, { provider, durationMs: Math.round(performance.now() - start) });
+    throw error;
+  }
+  logger.info('auth_oauth_started', { provider, durationMs: Math.round(performance.now() - start) });
   return data;
 };
 
