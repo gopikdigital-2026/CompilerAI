@@ -3,7 +3,7 @@ import {
   CheckCircle, XCircle, MessageSquare, GitBranch, Eye,
   TrendingUp, Clock, ShieldAlert, AlertTriangle, DollarSign,
   Link2, FileText, BarChart3, ChevronDown, ChevronUp,
-  Calendar, UserPlus, Send, ListTodo, CalendarClock,
+  Calendar, UserPlus, Send, ListTodo, CalendarClock, Zap,
 } from 'lucide-react';
 import type { AnalysisOpportunity } from '../../types/analysis';
 import { OPPORTUNITY_STATUS_INFO } from '../../lib/prioritizationEngine';
@@ -19,6 +19,7 @@ interface OpportunityCardProps {
   onCreateAutomation: (id: string) => void;
   onViewDetail: (opp: AnalysisOpportunity) => void;
   onAction?: (opp: AnalysisOpportunity, actionType: ActionType, details?: Record<string, unknown>) => void;
+  onConvertToAction?: (opp: AnalysisOpportunity) => void;
 }
 
 const priorityColors: Record<string, string> = {
@@ -44,7 +45,7 @@ const riskColors: Record<string, string> = {
 type TabId = 'overview' | 'evidence' | 'priority';
 
 export function OpportunityCard({
-  opp, onApprove, onDiscard, onSendToCopilot, onCreateAutomation, onViewDetail, onAction,
+  opp, onApprove, onDiscard, onSendToCopilot, onCreateAutomation, onViewDetail, onAction, onConvertToAction,
 }: OpportunityCardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [priorityExpanded, setPriorityExpanded] = useState(false);
@@ -229,6 +230,15 @@ export function OpportunityCard({
         >
           <GitBranch size={12} /> Automatizar
         </button>
+        {onConvertToAction && (
+          <button
+            data-testid="convert-to-action"
+            onClick={() => { onConvertToAction(opp); track('opportunity_converted_to_action', { id: opp.id }); }}
+            className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1"
+          >
+            <Zap size={12} /> Convertir en acción
+          </button>
+        )}
         <button
           data-testid="more-actions"
           onClick={() => setShowActions(!showActions)}

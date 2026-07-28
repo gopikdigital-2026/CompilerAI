@@ -47,6 +47,7 @@
     "validate:ux-sprint-1": "npm run lint && npm run typecheck && npm run test && npm run build && npm run e2e && npm run audit:functional-ui",
     "validate:ux-sprint-2": "npm run lint && npm run typecheck && npm run test && npm run build && npm run e2e && npm run audit:functional-ui",
     "validate:ux-sprint-3": "npm run lint && npm run typecheck && npm run test && npm run build && npm run e2e && npm run audit:functional-ui",
+    "validate:action-engine": "npm run lint && npm run typecheck && npx vitest run tests/unit/action-engine.logic.test.ts && npm run build && npx playwright test tests/e2e/action-center.spec.ts tests/e2e/action-workflow.spec.ts tests/e2e/approval-flow.spec.ts tests/e2e/notification.spec.ts && npm run audit:functional-ui",
     "test:coverage": "node --test --import tsx --experimental-test-coverage tests/**/*.test.ts",
     "report:release-readiness": "node scripts/enterprise-validate.mjs",
     "validate": "node scripts/validate.mjs",

@@ -12,6 +12,8 @@ import type { AnalysisOpportunity, OpportunityFilters, QuickFilterId } from '../
 import { QUICK_FILTERS, filterOpportunities } from '../../lib/prioritizationEngine';
 import { OpportunityCard } from '../../components/analysis/OpportunityCard';
 import { ImpactEffortMatrix } from '../../components/analysis/ImpactEffortMatrix';
+import { useActions } from '../../hooks/useActions';
+import { opportunityToAction } from '../../lib/actionEngine';
 
 const priorityColors: Record<string, string> = {
   critical: 'bg-error-500/15 text-error-400 border-error-500/20',
@@ -48,6 +50,7 @@ export function AnalysisPage({ onNavigate }: AnalysisPageProps = {}) {
   const analysis = useAnalysis();
   const { activeOrg } = useOrganization();
   const { t } = useTranslation();
+  const actions = useActions();
   const a = t.analysis;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [selectedOpp, setSelectedOpp] = useState<AnalysisOpportunity | null>(null);
@@ -323,6 +326,13 @@ export function AnalysisPage({ onNavigate }: AnalysisPageProps = {}) {
                     onSendToCopilot={(id) => analysis.updateOpportunityStatus(id, 'sent_to_copilot')}
                     onCreateAutomation={(id) => analysis.updateOpportunityStatus(id, 'automated')}
                     onViewDetail={(o) => setSelectedOpp(o)}
+                    onConvertToAction={(opp) => {
+                      const input = opportunityToAction(opp, activeOrg?.id ?? '', actions.actions[0]?.user_id ?? '');
+                      actions.create(input).then(() => {
+                        analysis.updateOpportunityStatus(opp.id, 'approved');
+                        onNavigate?.('actions');
+                      });
+                    }}
                   />
                 ))}
                 {filteredOpportunities.length === 0 && (
