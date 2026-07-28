@@ -52,7 +52,8 @@
     "test:coverage": "node --test --import tsx --experimental-test-coverage tests/**/*.test.ts",
     "report:release-readiness": "node scripts/enterprise-validate.mjs",
     "validate": "node scripts/validate.mjs",
-    "rc1:validate": "node scripts/enterprise-validate.mjs"
+    "rc1:validate": "node scripts/enterprise-validate.mjs",
+    "validate:beta-ready": "npm run lint && npx tsc --noEmit && npm run build && npx vitest run && npx playwright test tests/e2e/beta-readiness.spec.ts tests/e2e/beta-ready.spec.ts tests/e2e/action-center.spec.ts tests/e2e/action-workflow.spec.ts tests/e2e/approval-flow.spec.ts tests/e2e/notification.spec.ts && npm run audit:functional-ui && npm audit --audit-level=high --omit=dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

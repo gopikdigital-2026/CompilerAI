@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   LayoutDashboard, Cpu, Bot, GitBranch, Plug, Store, Activity,
-  Settings, ChevronLeft, ChevronRight, LogOut, HelpCircle, PlayCircle, Brain, Sparkles, Wand2, Workflow, Building2, Zap, FileText, ListTodo,
+  Settings, ChevronLeft, ChevronRight, LogOut, HelpCircle, PlayCircle, Brain, Sparkles, Wand2, Workflow, Building2, Zap, FileText, ListTodo, ShieldCheck,
 } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -10,7 +10,7 @@ import { useProfile } from '../../hooks/useProfile';
 
 export type DashboardPage =
   | 'home' | 'analysis' | 'report' | 'actions' | 'compiler' | 'runner' | 'memory' | 'brain' | 'prompt' | 'designer' | 'enterprise' | 'agents' | 'workflows'
-  | 'integrations' | 'marketplace' | 'monitor' | 'settings';
+  | 'integrations' | 'marketplace' | 'monitor' | 'settings' | 'beta';
 
 interface SidebarProps {
   current: DashboardPage;
@@ -42,6 +42,7 @@ export function Sidebar({ current, onNavigate, onLogout }: SidebarProps) {
     { id: 'marketplace',  label: t.sidebar.marketplace,  icon: <Store size={18} /> },
     { id: 'monitor',      label: t.sidebar.monitor,      icon: <Activity size={18} /> },
     { id: 'settings',     label: t.sidebar.settings,     icon: <Settings size={18} /> },
+    { id: 'beta',         label: 'Beta Ready',           icon: <ShieldCheck size={18} /> },
   ];
 
   return (

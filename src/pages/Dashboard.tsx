@@ -19,6 +19,7 @@ const Integrations       = React.lazy(() => import('./dashboard/Integrations').t
 const Marketplace        = React.lazy(() => import('./dashboard/Marketplace').then(m => ({ default: m.Marketplace })));
 const Monitor            = React.lazy(() => import('./dashboard/Monitor').then(m => ({ default: m.Monitor })));
 const SettingsPage       = React.lazy(() => import('./dashboard/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const BetaReadiness      = React.lazy(() => import('./dashboard/BetaReadiness').then(m => ({ default: m.BetaReadinessDashboard })));
 
 const FULL_HEIGHT_PAGES: DashboardPage[] = ['compiler', 'runner', 'memory', 'brain', 'prompt', 'designer', 'enterprise'];
 
@@ -49,6 +50,7 @@ function PageContent({ page, initialSection, onNavigate }: { page: DashboardPage
     case 'marketplace':  return <Marketplace />;
     case 'monitor':      return <Monitor />;
     case 'settings':     return <SettingsPage initialSection={initialSection as any} />;
+    case 'beta':         return <BetaReadiness />;
   }
 }
 

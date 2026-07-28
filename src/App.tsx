@@ -1,6 +1,9 @@
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { FeatureFlagsProvider } from './contexts/FeatureFlagsContext';
 import { ToastProvider } from './components/ui/Toast';
+import { FeedbackButton } from './components/ui/FeedbackButton';
+import { initObservability } from './lib/observability';
 import { useAuth } from './hooks/useAuth';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
@@ -51,16 +54,24 @@ function AppRouter() {
     window.location.hash = '';
   };
 
-  return <Dashboard onLogout={handleLogout} />;
+  return (
+    <>
+      <Dashboard onLogout={handleLogout} />
+      <FeedbackButton />
+    </>
+  );
 }
 
 function App() {
+  useEffect(() => { initObservability(); }, []);
   return (
     <LanguageProvider>
       <AuthProvider>
-        <ToastProvider>
-          <AppRouter />
-        </ToastProvider>
+        <FeatureFlagsProvider>
+          <ToastProvider>
+            <AppRouter />
+          </ToastProvider>
+        </FeatureFlagsProvider>
       </AuthProvider>
     </LanguageProvider>
   );
