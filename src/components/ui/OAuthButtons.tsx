@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { getAuthProviders, type AuthProviderConfig } from '../lib/authProviders';
-import { signInWithOAuth } from '../services/auth.service';
-import { logger } from '../lib/logger';
+import { getAuthProviders, type AuthProviderConfig } from '../../lib/authProviders';
+import { signInWithOAuth } from '../../services/auth.service';
+import { logger } from '../../lib/logger';
 
 function GoogleIcon({ size = 16 }: { size?: number }) {
   return (
