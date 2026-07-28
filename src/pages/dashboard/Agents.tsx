@@ -3,6 +3,7 @@ import { Bot, Plus, Search, MoreHorizontal, Play, Pause, Trash2, TrendingUp } fr
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { MOCK_AGENTS } from '../../lib/mockData';
+import { DemoBadge } from '../../components/ui/DemoBadge';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { Agent } from '../../types';
 
@@ -31,7 +32,7 @@ export function Agents() {
     <div className="p-6 space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-100">{ag.title}</h2>
+          <h2 className="text-xl font-semibold text-neutral-100 flex items-center gap-2">{ag.title} <DemoBadge /></h2>
           <p className="text-sm text-neutral-500 mt-0.5">{ag.subtitle.replace('{count}', String(MOCK_AGENTS.length))}</p>
         </div>
         <button className="btn-primary text-sm">

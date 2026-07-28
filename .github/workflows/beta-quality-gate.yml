@@ -1,0 +1,86 @@
+name: Beta Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  beta-quality-gate:
+    name: Beta Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      E2E_BASE_URL: http://localhost:5173
+      E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npx vitest run
+
+      - name: Playwright E2E (beta-readiness)
+        run: npx playwright test tests/e2e/beta-readiness.spec.ts
+
+      - name: Playwright E2E (action-center)
+        run: npx playwright test tests/e2e/action-center.spec.ts tests/e2e/action-workflow.spec.ts
+
+      - name: Security audit
+        run: npm audit --audit-level=high --omit=dev
+        continue-on-error: true
+
+      - name: Functional UI audit
+        run: npm run audit:functional-ui
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-test-results
+          path: test-results/
+          retention-days: 7
+
+      - name: Beta gate summary
+        if: always()
+        run: |
+          echo "## Beta Quality Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Lint: ${{ job.steps.lint.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Typecheck: ${{ job.steps.typecheck.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ job.steps.build.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit tests: ${{ job.steps.unit-tests.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Playwright E2E: ${{ job.steps.playwright-e2e-beta-readiness.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security audit: ${{ job.steps.security-audit.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Functional UI audit: ${{ job.steps.functional-ui-audit.outcome }}" >> $GITHUB_STEP_SUMMARY

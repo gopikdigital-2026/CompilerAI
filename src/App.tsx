@@ -1,5 +1,6 @@
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './components/ui/Toast';
 import { useAuth } from './hooks/useAuth';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
@@ -57,7 +58,9 @@ function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AppRouter />
+        <ToastProvider>
+          <AppRouter />
+        </ToastProvider>
       </AuthProvider>
     </LanguageProvider>
   );

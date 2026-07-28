@@ -6,6 +6,7 @@ import {
 import { useActions } from '../../hooks/useActions';
 import { useAuth } from '../../hooks/useAuth';
 import { useOrganization } from '../../hooks/useOrganization';
+import { useToast } from '../../components/ui/Toast';
 import { calculateActionStats, detectBlockers } from '../../lib/actionEngine';
 import { ActionCard } from '../../components/action/ActionCard';
 import { ActionDetailModal } from '../../components/action/ActionDetailModal';
@@ -60,6 +61,7 @@ function StatWidget({ label, value, icon: Icon, color, testId }: StatWidgetProps
 export function ActionCenter() {
   const { user } = useAuth();
   const { activeOrg, members } = useOrganization();
+  const toast = useToast();
   const {
     actions, notifications, loading, error,
     create, changeStatus, changeProgress, assign, changePriority,
@@ -104,6 +106,7 @@ export function ActionCenter() {
   }
 
   if (error) {
+    toast.showError('Error al cargar acciones');
     return (
       <div data-testid="action-center" className="p-6">
         <ReportStateView state="backend_error" onAction={refresh} />

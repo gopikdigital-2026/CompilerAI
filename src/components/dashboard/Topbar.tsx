@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Bell, ChevronDown, X, Globe, User, Building2, Users, CreditCard, Key, Shield, Bell as BellIcon, Plug, LogOut } from 'lucide-react';
 import { MOCK_NOTIFICATIONS } from '../../lib/mockData';
+import { DemoBadge } from '../../components/ui/DemoBadge';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../hooks/useAuth';
@@ -192,7 +193,7 @@ export function Topbar({ currentPage, onNavigate, onLogout }: TopbarProps) {
           {notifOpen && (
             <div className="absolute right-0 top-12 w-80 card border-surface-600 shadow-card-hover animate-fade-in overflow-hidden" role="dialog" aria-label="Notifications">
               <div className="flex items-center justify-between px-4 py-3 border-b border-surface-700">
-                <span className="text-sm font-semibold text-neutral-100">{t.topbar.notifications}</span>
+                <span className="text-sm font-semibold text-neutral-100 flex items-center gap-2">{t.topbar.notifications} <DemoBadge /></span>
                 <button onClick={() => setNotifOpen(false)} className="text-neutral-500 hover:text-neutral-300" aria-label="Close notifications">
                   <X size={14} />
                 </button>

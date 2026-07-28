@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { useOrganization } from './useOrganization';
 import { useDashboard, type DashboardPeriod } from './useDashboard';
 import { track } from '../lib/telemetry';
+import { logger } from '../lib/logger';
 import {
   ANALYSIS_STAGES,
   STAGE_DURATION_MS,
@@ -61,6 +62,7 @@ export function useAnalysis() {
       .limit(20)
       .then(({ data, error: err }) => {
         if (err) {
+          logger.supabaseError('fetchAnalysisHistory', err);
           setHistory([]);
         } else {
           setHistory((data ?? []) as AnalysisHistoryItem[]);
@@ -110,6 +112,7 @@ export function useAnalysis() {
       .single();
 
     if (insertError || !analysisRecord) {
+      logger.supabaseError('analysisInsert', insertError);
       setError('Error al crear el registro de análisis');
       setStatus('error');
       track('analysis_failed', { org_id: orgId, reason: 'insert_error' });

@@ -1,7 +1,7 @@
 # Dossier Funcional de CompilerAI
 
 **Documento para:** Product Owners, clientes piloto, equipos de ventas, soporte técnico e inversores no técnicos.
-**Fecha:** 2026-07-27
+**Fecha:** 2026-07-28 (actualizado para beta privada)
 **Idioma:** Español
 **Propósito:** Describir, de forma clara y completa, el estado funcional real de CompilerAI: qué funciona hoy, qué funciona con limitaciones, qué es demostración, qué requiere configuración y qué está en desarrollo.
 
@@ -11,15 +11,15 @@
 
 CompilerAI es una plataforma de orquestación de inteligencia artificial que permite compilar especificaciones en blueprints ejecutables, ejecutar flujos, gestionar memoria de agentes, administrar prompts y diseñar automatizaciones visuales.
 
-Tras el **UX Sprint 1**, el área de configuración (Settings) se ha ampliado de 4 a **8 secciones completamente funcionales**, cada una con insignias de estado claras (Operativo, Configuración necesaria, En desarrollo). El menú de perfil ahora ofrece 8 ítems que navegan a secciones reales, y se han incorporado navegación por teclado y accesibilidad ARIA.
+Tras la preparación para **beta privada**, CompilerAI ofrece un flujo empresarial completo: análisis → reporte ejecutivo → oportunidades → acciones → seguimiento. Todas las secciones de demostración ahora muestran una etiqueta "Demo" visible. Se ha añadido el Action Center, Platform Health, logging estructurado, notificaciones toast, y una suite E2E de beta readiness.
 
 **Distribución de estado general:**
 
 | Estado | Descripción | Cobertura aproximada |
 |---|---|---|
-| Operativo | Funciona de extremo a extremo con datos reales | Autenticación, perfil, organización, API Keys, seguridad, notificaciones, navegación |
+| Operativo | Funciona de extremo a extremo con datos reales | Autenticación, perfil, organización, API Keys, seguridad, notificaciones, navegación, análisis, executive report, oportunidades, Action Center, Monitor (salud en vivo) |
 | Operativo con limitaciones | Funciona parcialmente; alguna subfunción está inactiva | Equipo (lectura sin invitaciones), Workflow Designer (lienzo sin toolbar) |
-| Demostración | Renderiza con datos simulados | Home, Compiler, Runner, Memory, Brain, Prompt, Enterprise, Agents, Workflows, Integrations, Marketplace, Monitor, Notifications (topbar) |
+| Demostración (etiquetada) | Renderiza con datos simulados con etiqueta "Demo" visible | Home, Compiler, Runner, Memory, Brain, Prompt, Enterprise, Agents, Workflows, Integrations, Marketplace, Monitor (métricas históricas), Notifications (topbar) |
 | Configuración necesaria | Requiere configuración externa para activarse | Billing (Stripe), Integrations (credenciales), invitaciones (servidor de correo) |
 | En desarrollo | Requiere implementación de backend | Búsqueda global, MFA |
 
@@ -444,6 +444,91 @@ Muestra notificaciones simuladas en un panel desplegable.
 | **Stripe** | Servicio externo de procesamiento de pagos, necesario para la facturación. |
 | **ARIA** | Conjunto de atributos que mejoran la accesibilidad de la interfaz para lectores de pantalla. |
 | **focus-visible** | Estilo visual que indica qué elemento está enfocado al navegar con teclado. |
+
+---
+
+## 19. Action Center (Nuevo)
+
+**Estado: Operativo**
+
+El Action Center permite convertir oportunidades en acciones trazables con ciclo de vida completo:
+
+- **Conversión desde oportunidades:** cada tarjeta de oportunidad tiene un botón "Convertir en acción" que preserva el vínculo con la oportunidad original.
+- **Estados:** 7 estados (draft, pending, assigned, in_progress, blocked, completed, cancelled) con transiciones controladas.
+- **Historial:** cada cambio de estado se registra en `action_history` con usuario, timestamp, comentario.
+- **Comentarios:** los miembros pueden añadir comentarios a cada acción.
+- **Asignación:** las acciones pueden asignarse a miembros de la organización.
+- **Priorización:** impacto, urgencia, esfuerzo, ROI esperado, dependencias y riesgo.
+- **Notificaciones:** eventos automáticos al crear, cambiar prioridad, asignar, completar o bloquear.
+- **Dashboard widgets:** acciones abiertas, críticas, completadas, ROI esperado, tiempo promedio de resolución.
+- **Filtros y búsqueda:** por estado, prioridad, asignado, texto.
+
+**Permisos:** Owner (CRUD + delete), Admin (CRUD), Member (CRUD), Viewer (lectura).
+
+**RLS:** aislamiento por organización vía `memberships`. Notificaciones scoped a `user_id = auth.uid()`.
+
+**Insignia de estado:** Operativo.
+
+## 20. Platform Health (Nuevo)
+
+**Estado: Operativo (salud en vivo) / Demostración (métricas históricas)**
+
+La página Monitor ahora incluye:
+
+- **Salud de servicios en tiempo real:** API, Base de Datos, IA, Conectores, Colas, Notificaciones — con latencia y estado.
+- **Banner de estado general:** Operativo / Degradado / Caído.
+- **Auto-refresh:** cada 30 segundos.
+- **Métricas históricas:** latencia, tasa de error, throughput, uptime — etiquetadas con "Demo".
+
+**Insignia de estado:** Operativo (salud en vivo) / Demostración (históricos).
+
+## 21. Logging estructurado (Nuevo)
+
+**Estado: Operativo**
+
+Sistema de logging que registra:
+
+- Errores de Supabase (con código de error)
+- Errores de API (con status HTTP)
+- Tiempos de respuesta de operaciones
+- Eventos de autenticación
+- Eventos de análisis
+
+**Redacción automática:** contraseñas, tokens, secretos, API keys, emails se redactan automáticamente antes de registrar.
+
+## 22. Notificaciones toast (Nuevo)
+
+**Estado: Operativo**
+
+Sistema de notificaciones visuales temporales que muestra:
+
+- Mensajes de éxito (verde) al iniciar sesión, registrar cuenta, completar acciones
+- Mensajes de error (rojo) al fallar operaciones
+- Mensajes informativos (azul) para acciones del sistema
+
+Las notificaciones aparecen en la esquina inferior derecha, se cierran automáticamente a los 4 segundos, y pueden cerrarse manualmente.
+
+## 23. Etiquetado de datos demo (Nuevo)
+
+**Estado: Operativo**
+
+Todas las secciones que muestran datos de demostración ahora llevan una etiqueta "Demo" visible:
+
+- Agents, Workflows, Integrations (página principal)
+- Enterprise Center y todos sus subcomponentes
+- Topbar (panel de notificaciones)
+- Monitor (métricas históricas)
+
+Las secciones con datos reales (sin etiqueta): Dashboard, Analysis, Action Center, Settings, Monitor (salud en vivo).
+
+## 24. Beta readiness — Validación y CI/CD (Nuevo)
+
+**Estado: Operativo**
+
+- **Comando `npm run validate:beta`:** ejecuta lint, typecheck, build, unit tests, Playwright E2E, security audit, y functional UI audit.
+- **Workflow `beta-quality-gate.yml`:** bloquea merges si cualquier validación falla.
+- **Suite E2E `beta-readiness.spec.ts`:** recorre login, registro, navegación, dashboard, análisis, action center, monitor, settings, badges demo, y responsive.
+- **RLS:** 54 tablas con RLS habilitado, aislamiento por organización verificado.
 
 ---
 

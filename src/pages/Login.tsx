@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { useTranslation } from '../hooks/useTranslation';
+import { useToast } from '../components/ui/Toast';
 import { signIn } from '../services/auth.service';
 
 interface LoginProps {
@@ -10,6 +11,7 @@ interface LoginProps {
 
 export function Login({ onNavigate }: LoginProps) {
   const { t } = useTranslation();
+  const toast = useToast();
   const a = t.auth;
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
@@ -22,9 +24,11 @@ export function Login({ onNavigate }: LoginProps) {
     setError(null);
     try {
       await signIn(form.email, form.password);
-      // Auth state change in AuthContext will handle the redirect
+      toast.showSuccess(a.success?.login ?? 'Sesión iniciada');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : a.errors.generic);
+      const msg = err instanceof Error ? err.message : a.errors.generic;
+      setError(msg);
+      toast.showError(msg);
     } finally {
       setLoading(false);
     }

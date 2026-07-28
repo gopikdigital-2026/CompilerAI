@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/telemetry';
+import { logger } from '../lib/logger';
 import type {
   ActionRecord, ActionStatus, ActionHistoryEntry, ActionComment, ActionNotification,
 } from '../types/action';
@@ -16,7 +17,7 @@ export async function fetchActions(orgId: string): Promise<ActionRecord[]> {
     `)
     .eq('organization_id', orgId)
     .order('created_at', { ascending: false });
-  if (error) throw error;
+  if (error) { logger.supabaseError('fetchActions', error); throw error; }
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
     id: row.id as string,
     organization_id: row.organization_id as string,
@@ -75,7 +76,7 @@ export async function createAction(input: CreateActionInput): Promise<ActionReco
     .insert(insertData)
     .select()
     .single();
-  if (error) throw error;
+  if (error) { logger.supabaseError('createAction', error); throw error; }
 
   const action = data as ActionRecord;
   track('action_created', { action_id: action.id, origin: input.origin });
@@ -125,7 +126,7 @@ export async function updateActionStatus(
       completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
     })
     .eq('id', actionId);
-  if (error) throw error;
+  if (error) { logger.supabaseError('updateActionStatus', error); throw error; }
 
   await supabase.from('action_history').insert({
     action_id: actionId,
@@ -163,7 +164,7 @@ export async function updateActionProgress(
       completed_at: clamped === 100 ? new Date().toISOString() : null,
     })
     .eq('id', actionId);
-  if (error) throw error;
+  if (error) { logger.supabaseError('updateActionProgress', error); throw error; }
 
   track('action_progress_updated', { action_id: actionId, progress: clamped });
 }
@@ -182,7 +183,7 @@ export async function assignAction(
       updated_at: new Date().toISOString(),
     })
     .eq('id', actionId);
-  if (updateError) throw updateError;
+  if (updateError) { logger.supabaseError('assignAction', updateError); throw updateError; }
 
   await supabase.from('action_assignments').insert({
     action_id: actionId,
@@ -221,7 +222,7 @@ export async function updateActionPriority(
     .from('action_plans')
     .update({ priority: newPriority, updated_at: new Date().toISOString() })
     .eq('id', actionId);
-  if (error) throw error;
+  if (error) { logger.supabaseError('updateActionPriority', error); throw error; }
 
   await supabase.from('action_history').insert({
     action_id: actionId,
@@ -251,7 +252,7 @@ export async function fetchActionHistory(actionId: string): Promise<ActionHistor
     .select('*')
     .eq('action_id', actionId)
     .order('created_at', { ascending: true });
-  if (error) throw error;
+  if (error) { logger.supabaseError('fetchActionHistory', error); throw error; }
   return (data ?? []) as ActionHistoryEntry[];
 }
 
@@ -261,7 +262,7 @@ export async function fetchActionComments(actionId: string): Promise<ActionComme
     .select('*, profiles:user_id(full_name)')
     .eq('action_id', actionId)
     .order('created_at', { ascending: true });
-  if (error) throw error;
+  if (error) { logger.supabaseError('fetchActionComments', error); throw error; }
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
     id: row.id as string,
     action_id: row.action_id as string,
@@ -287,7 +288,7 @@ export async function addActionComment(
       user_id: userId,
       content,
     });
-  if (error) throw error;
+  if (error) { logger.supabaseError('addActionComment', error); throw error; }
 }
 
 export async function fetchNotifications(userId: string): Promise<ActionNotification[]> {
@@ -297,7 +298,7 @@ export async function fetchNotifications(userId: string): Promise<ActionNotifica
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(50);
-  if (error) throw error;
+  if (error) { logger.supabaseError('fetchNotifications', error); throw error; }
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
     id: row.id as string,
     organization_id: row.organization_id as string,
@@ -316,7 +317,7 @@ export async function markNotificationRead(notificationId: string): Promise<void
     .from('action_notifications')
     .update({ read: true })
     .eq('id', notificationId);
-  if (error) throw error;
+  if (error) { logger.supabaseError('markNotificationRead', error); throw error; }
 }
 
 export async function markAllNotificationsRead(userId: string): Promise<void> {
@@ -325,7 +326,7 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .update({ read: true })
     .eq('user_id', userId)
     .eq('read', false);
-  if (error) throw error;
+  if (error) { logger.supabaseError('markAllNotificationsRead', error); throw error; }
 }
 
 async function createActionNotification(

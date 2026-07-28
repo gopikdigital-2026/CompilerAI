@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plug, Search, CheckCircle, XCircle, Brain, MessageSquare, GitBranch, CreditCard, Database, Zap, FileText, Sparkles } from 'lucide-react';
 import { MOCK_INTEGRATIONS } from '../../lib/mockData';
+import { DemoBadge } from '../../components/ui/DemoBadge';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -47,7 +48,7 @@ export function Integrations() {
     <div className="p-6 space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-100">{it.title}</h2>
+          <h2 className="text-xl font-semibold text-neutral-100 flex items-center gap-2">{it.title} <DemoBadge /></h2>
           <p className="text-sm text-neutral-500 mt-0.5">
             {it.subtitle.replace('{connected}', String(connectedCount)).replace('{total}', String(MOCK_INTEGRATIONS.length))}
           </p>

@@ -1,5 +1,4 @@
-import { describe, it, expect } from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 
 describe('Dashboard Logic', () => {
   describe('safeCount', () => {
@@ -9,15 +8,15 @@ describe('Dashboard Logic', () => {
     };
 
     it('formats numbers below 1000 as-is', () => {
-      assert.strictEqual(safeCount(0), '0');
-      assert.strictEqual(safeCount(42), '42');
-      assert.strictEqual(safeCount(999), '999');
+      expect(safeCount(0)).toBe('0');
+      expect(safeCount(42)).toBe('42');
+      expect(safeCount(999)).toBe('999');
     });
 
     it('formats numbers 1000+ as k', () => {
-      assert.strictEqual(safeCount(1000), '1.0k');
-      assert.strictEqual(safeCount(1500), '1.5k');
-      assert.strictEqual(safeCount(10000), '10.0k');
+      expect(safeCount(1000)).toBe('1.0k');
+      expect(safeCount(1500)).toBe('1.5k');
+      expect(safeCount(10000)).toBe('10.0k');
     });
   });
 
@@ -27,17 +26,17 @@ describe('Dashboard Logic', () => {
     };
 
     it('returns 0 when no runs', () => {
-      assert.strictEqual(calcSuccessRate(0, 0), 0);
+      expect(calcSuccessRate(0, 0)).toBe(0);
     });
 
     it('calculates percentage correctly', () => {
-      assert.strictEqual(calcSuccessRate(10, 8), 80);
-      assert.strictEqual(calcSuccessRate(4, 3), 75);
-      assert.strictEqual(calcSuccessRate(100, 95), 95);
+      expect(calcSuccessRate(10, 8)).toBe(80);
+      expect(calcSuccessRate(4, 3)).toBe(75);
+      expect(calcSuccessRate(100, 95)).toBe(95);
     });
 
     it('handles 100% success', () => {
-      assert.strictEqual(calcSuccessRate(10, 10), 100);
+      expect(calcSuccessRate(10, 10)).toBe(100);
     });
   });
 
@@ -49,21 +48,21 @@ describe('Dashboard Logic', () => {
     };
 
     it('returns morning for hours 0-11', () => {
-      assert.strictEqual(getGreeting(0, { morning: 'M', afternoon: 'A', evening: 'E' }), 'M');
-      assert.strictEqual(getGreeting(8, { morning: 'M', afternoon: 'A', evening: 'E' }), 'M');
-      assert.strictEqual(getGreeting(11, { morning: 'M', afternoon: 'A', evening: 'E' }), 'M');
+      expect(getGreeting(0, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('M');
+      expect(getGreeting(8, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('M');
+      expect(getGreeting(11, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('M');
     });
 
     it('returns afternoon for hours 12-18', () => {
-      assert.strictEqual(getGreeting(12, { morning: 'M', afternoon: 'A', evening: 'E' }), 'A');
-      assert.strictEqual(getGreeting(15, { morning: 'M', afternoon: 'A', evening: 'E' }), 'A');
-      assert.strictEqual(getGreeting(18, { morning: 'M', afternoon: 'A', evening: 'E' }), 'A');
+      expect(getGreeting(12, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('A');
+      expect(getGreeting(15, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('A');
+      expect(getGreeting(18, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('A');
     });
 
     it('returns evening for hours 19-23', () => {
-      assert.strictEqual(getGreeting(19, { morning: 'M', afternoon: 'A', evening: 'E' }), 'E');
-      assert.strictEqual(getGreeting(22, { morning: 'M', afternoon: 'A', evening: 'E' }), 'E');
-      assert.strictEqual(getGreeting(23, { morning: 'M', afternoon: 'A', evening: 'E' }), 'E');
+      expect(getGreeting(19, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('E');
+      expect(getGreeting(22, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('E');
+      expect(getGreeting(23, { morning: 'M', afternoon: 'A', evening: 'E' })).toBe('E');
     });
   });
 
@@ -81,10 +80,10 @@ describe('Dashboard Logic', () => {
         { severity: 'high' },
       ];
       const sorted = sortAlerts(alerts);
-      assert.strictEqual(sorted[0].severity, 'critical');
-      assert.strictEqual(sorted[1].severity, 'high');
-      assert.strictEqual(sorted[2].severity, 'medium');
-      assert.strictEqual(sorted[3].severity, 'info');
+      expect(sorted[0].severity).toBe('critical');
+      expect(sorted[1].severity).toBe('high');
+      expect(sorted[2].severity).toBe('medium');
+      expect(sorted[3].severity).toBe('info');
     });
   });
 
@@ -102,27 +101,27 @@ describe('Dashboard Logic', () => {
     };
 
     it('returns just now for null', () => {
-      assert.strictEqual(formatRelative(null), 'just now');
+      expect(formatRelative(null)).toBe('just now');
     });
 
     it('returns just now for very recent', () => {
       const now = new Date().toISOString();
-      assert.strictEqual(formatRelative(now), 'just now');
+      expect(formatRelative(now)).toBe('just now');
     });
 
     it('returns minutes ago', () => {
       const fiveMinAgo = new Date(Date.now() - 5 * 60000).toISOString();
-      assert.match(formatRelative(fiveMinAgo), /^\d+ min ago$/);
+      expect(formatRelative(fiveMinAgo)).toMatch(/^\d+ min ago$/);
     });
 
     it('returns hours ago', () => {
       const twoHoursAgo = new Date(Date.now() - 2 * 3600000).toISOString();
-      assert.match(formatRelative(twoHoursAgo), /^\d+ h ago$/);
+      expect(formatRelative(twoHoursAgo)).toMatch(/^\d+ h ago$/);
     });
 
     it('returns days ago', () => {
       const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
-      assert.match(formatRelative(threeDaysAgo), /^\d+ days ago$/);
+      expect(formatRelative(threeDaysAgo)).toMatch(/^\d+ days ago$/);
     });
   });
 
@@ -130,12 +129,12 @@ describe('Dashboard Logic', () => {
     const checkEmpty = (counts: number[]): boolean => counts.every((c) => c === 0);
 
     it('returns true when all counts are 0', () => {
-      assert.strictEqual(checkEmpty([0, 0, 0, 0, 0, 0]), true);
+      expect(checkEmpty([0, 0, 0])).toBe(true);
     });
 
     it('returns false when any count > 0', () => {
-      assert.strictEqual(checkEmpty([0, 0, 1, 0, 0, 0]), false);
-      assert.strictEqual(checkEmpty([0, 0, 0, 0, 0, 5]), false);
+      expect(checkEmpty([0, 1, 0])).toBe(false);
+      expect(checkEmpty([5, 0, 0])).toBe(false);
     });
   });
 
@@ -148,14 +147,14 @@ describe('Dashboard Logic', () => {
     };
 
     it('maps each priority to a color', () => {
-      assert.strictEqual(priorityColors.critical, 'error');
-      assert.strictEqual(priorityColors.high, 'warning');
-      assert.strictEqual(priorityColors.medium, 'brand');
-      assert.strictEqual(priorityColors.low, 'neutral');
+      expect(priorityColors.critical).toBe('error');
+      expect(priorityColors.high).toBe('warning');
+      expect(priorityColors.medium).toBe('brand');
+      expect(priorityColors.low).toBe('neutral');
     });
 
     it('has all 4 priorities', () => {
-      assert.strictEqual(Object.keys(priorityColors).length, 4);
+      expect(Object.keys(priorityColors).length).toBe(4);
     });
   });
 });

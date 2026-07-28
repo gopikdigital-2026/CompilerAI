@@ -9,6 +9,7 @@ import { CostIntelligence } from '../../components/enterprise/CostIntelligence';
 import { ArchitectureReview } from '../../components/enterprise/ArchitectureReview';
 import { ReadinessScore } from '../../components/enterprise/ReadinessScore';
 import { GLOBAL_KPIS, SYSTEM_STATUS, READINESS } from '../../lib/enterpriseMocks';
+import { DemoBadge } from '../../components/ui/DemoBadge';
 
 type Tab = 'executive' | 'org' | 'health' | 'cost' | 'arch' | 'readiness';
 
@@ -36,6 +37,7 @@ export default function EnterpriseCenter() {
             <LayoutDashboard size={14} className="text-white" />
           </div>
           <span className="text-sm font-bold text-neutral-200">Enterprise Center</span>
+          <DemoBadge />
           <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-900/50 uppercase tracking-wider">Internal</span>
         </div>
 

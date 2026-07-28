@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { useTranslation } from '../hooks/useTranslation';
+import { useToast } from '../components/ui/Toast';
 import { signUp } from '../services/auth.service';
 import { createOrganizationWithOwner } from '../services/organizations.service';
 
@@ -11,6 +12,7 @@ interface RegisterProps {
 
 export function Register({ onNavigate }: RegisterProps) {
   const { t } = useTranslation();
+  const toast = useToast();
   const a = t.auth;
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', company: '' });
@@ -24,9 +26,11 @@ export function Register({ onNavigate }: RegisterProps) {
     try {
       await signUp(form.email, form.password, form.name);
       await createOrganizationWithOwner(form.company || form.name);
-      // Auth state change in AuthContext handles redirect
+      toast.showSuccess(a.success?.register ?? 'Cuenta creada correctamente');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : a.errors.generic);
+      const msg = err instanceof Error ? err.message : a.errors.generic;
+      setError(msg);
+      toast.showError(msg);
     } finally {
       setLoading(false);
     }
